@@ -1,0 +1,428 @@
+.chatContainer {
+  display: flex;
+  height: 100vh;
+  background-color: #f9fafb;
+}
+
+/* Sidebar */
+.sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background-color: #1f2937;
+  color: white;
+  display: flex;
+  flex-direction: column;
+  padding: 1rem;
+}
+
+.sidebarButton {
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 0.375rem;
+  background-color: transparent;
+  color: white;
+  text-align: left;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.sidebarButton:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+}
+
+.dangerButton {
+  background-color: transparent;
+  border: 1px solid #ef4444; /* Red-500 */
+  color: #ef4444;
+}
+
+.dangerButton:hover {
+  background-color: #ef4444;
+  color: white;
+}
+
+/* Dark Theme */
+.dark .chatContainer {
+  background-color: #111827; /* Gray-900 */
+}
+
+.dark .sidebar {
+  background-color: #1f2937; /* Gray-800 */
+}
+
+.dark .chatArea {
+  background-color: #111827; /* Gray-900 */
+}
+
+.dark .welcomeContainer h2,
+.dark .welcomeContainer p {
+  color: #d1d5db; /* Gray-300 */
+}
+
+.dark .userMessage {
+  background-color: #374151; /* Gray-700 */
+  color: #f9fafb; /* Gray-50 */
+}
+
+.dark .botMessage {
+  background-color: #4b5563; /* Gray-600 */
+  color: #f9fafb; /* Gray-50 */
+}
+
+.dark .chatInputContainer {
+  border-top-color: #374151; /* Gray-700 */
+}
+
+.dark .chatInput {
+  background-color: #374151; /* Gray-700 */
+  color: #f9fafb; /* Gray-50 */
+  border-color: #4b5563; /* Gray-600 */
+}
+
+.dark .chatInput::placeholder {
+  color: #9ca3af; /* Gray-400 */
+}
+
+.dark .sendButton {
+  background-color: #4f46e5; /* Indigo-600 */
+  color: white;
+}
+
+.dark .sendButton:hover {
+  background-color: #4338ca; /* Indigo-700 */
+}
+
+.dark .loadingIndicator {
+    color: #d1d5db; /* Gray-300 */
+}
+
+.recordingIndicator {
+  position: absolute;
+  top: -25px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #ef4444;
+  color: white;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+}
+
+.recordingIcon {
+  color: #ef4444;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.7;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.chatHistory {
+  flex-grow: 1;
+  overflow-y: auto;
+}
+
+.chatHistoryItem {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+  border-radius: 0.375rem;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.chatHistoryItem.active {
+  background-color: #374151;
+}
+
+.chatHistoryItem:hover {
+  background-color: #374151;
+}
+
+.deleteButton {
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 0.25rem;
+  transition: color 0.2s ease-in-out;
+}
+
+.deleteButton:hover {
+  color: #ef4444; /* Red-500 */
+}
+
+/* Chat Area */
+.chatArea {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.messageArea {
+  flex-grow: 1;
+  padding: 1.5rem;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  max-width: 70%;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  line-height: 1.5;
+}
+
+.userMessage {
+  align-self: flex-end;
+  background-color: #22c55e;
+  color: white;
+  border-bottom-right-radius: 0;
+}
+
+.botMessage {
+  align-self: flex-start;
+  background-color: #e5e7eb;
+  color: #1f2937;
+  border-bottom-left-radius: 0;
+}
+
+/* The main container for the text input and buttons */
+.inputArea {
+  position: relative; /* Crucial for positioning the file indicator */
+  padding: 1.5rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+.inputForm {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  padding: 0.5rem;
+  background-color: #f0f0f0;
+  border-radius: 9999px;
+}
+
+.inputField {
+  flex-grow: 1;
+  border: none;
+  background-color: transparent;
+  font-size: 1rem;
+  padding: 0.5rem;
+  outline: none;
+}
+
+.sendButton {
+  background-color: #1d4ed8; /* A nice blue */
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  cursor: pointer;
+  font-size: 1rem; /* Adjusted for send icon */
+  margin-left: 10px;
+  transition: background-color 0.3s ease;
+  padding-left: 2px; /* Small adjustment for centering send icon */
+}
+
+.sendButton:hover {
+  background-color: #2563eb; /* Lighter blue on hover */
+}
+
+.iconButton {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+  font-size: 1.2rem; /* Adjusted for better icon scaling */
+  color: #555;
+  padding: 0;
+  width: 40px;
+  height: 40px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: color 0.2s ease-in-out;
+}
+
+.iconButton:hover {
+    color: #000;
+}
+
+.micButton {
+  margin: 0 5px;
+}
+
+.micButton.recording {
+  color: #ef4444; /* Red color for recording */
+}
+
+.clipButton {
+  margin: 0 5px;
+}
+
+.sendButton:disabled {
+  background-color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.inputField:disabled {
+    background-color: #f3f4f6;
+}
+
+.loading {
+  opacity: 0.7;
+  font-style: italic;
+  color: #888;
+}
+
+.processing {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+/* Styles for the file upload indicator */
+.fileIndicatorContainer {
+  position: absolute;
+  bottom: 85px; /* Position it just above the input area */
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+}
+
+.fileIndicator {
+  display: flex;
+  align-items: center;
+  background-color: #e9ecef;
+  color: #495057;
+  padding: 6px 12px;
+  border-radius: 16px;
+  font-size: 14px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+  animation: slideUp 0.3s ease-out;
+}
+
+.dark .fileIndicator {
+  background-color: #3a3f44;
+  color: #e9ecef;
+}
+
+.fileName {
+  margin-left: 8px;
+  max-width: 200px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translate(-50%, 10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.waveContainer {
+  display: flex;
+  align-items: flex-end;
+  height: 20px;
+}
+
+.wave {
+  width: 4px;
+  height: 5px;
+  margin: 0 2px;
+  background-color: #007bff;
+  border-radius: 2px;
+  animation: wave-animation 1.2s infinite ease-in-out;
+}
+
+.dark .wave {
+  background-color: #4dabf7;
+}
+
+.recordingWave {
+  background-color: #ef4444; /* Red color for recording */
+}
+
+.wave:nth-child(2) {
+  animation-delay: -1.0s;
+}
+
+.wave:nth-child(3) {
+  animation-delay: -0.8s;
+}
+
+.wave:nth-child(4) {
+  animation-delay: -0.6s;
+}
+
+.wave:nth-child(5) {
+  animation-delay: -0.4s;
+}
+
+@keyframes wave-animation {
+  0%, 40%, 100% {
+    height: 5px;
+  }
+  20% {
+    height: 20px;
+  }
+}
+
+.recordingIndicatorInForm {
+  display: flex;
+  align-items: center;
+  flex-grow: 1;
+  padding: 0 0.5rem;
+  gap: 10px;
+  color: #555;
+  font-size: 1rem;
+}
+
+.welcomeContainer {
+  text-align: center;
+  margin: auto;
+  padding: 2rem;
+  max-width: 600px;
+  color: #4b5563;
+}
+
+.welcomeTitle {
+  font-size: 1.75rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #1f2937;
+}
+
+.welcomeText {
+  line-height: 1.6;
+  margin-bottom: 1rem;
+}

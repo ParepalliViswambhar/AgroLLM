@@ -1,0 +1,134 @@
+/* Auth.module.css */
+
+.authContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background-color: #121212;
+  font-family: 'Arial', sans-serif;
+}
+
+.authCard {
+  background: #1e1e1e;
+  padding: 2.5rem;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  width: 100%;
+  max-width: 400px;
+  text-align: center;
+  color: #e0e0e0;
+}
+
+.title {
+  font-size: 1.8rem;
+  font-weight: bold;
+  color: #66bb6a;
+  margin-bottom: 0.5rem;
+}
+
+.subtitle {
+  color: #a0a0a0;
+  margin-bottom: 2rem;
+}
+
+.inputGroup {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.icon {
+  position: absolute;
+  left: 1rem;
+  color: #a0a0a0;
+  font-size: 1.2rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.8rem 1rem 0.8rem 3rem;
+  border: 1px solid #444;
+  background-color: #2c2c2c;
+  color: #e0e0e0;
+  border-radius: 8px;
+  font-size: 1rem;
+  box-sizing: border-box; /* Important for padding and width */
+}
+
+.input:focus {
+  outline: none;
+  border-color: #66bb6a;
+  box-shadow: 0 0 0 2px rgba(102, 187, 106, 0.3);
+}
+
+.button {
+  width: 100%;
+  padding: 0.8rem 1rem;
+  border: none;
+  border-radius: 8px;
+  background-color: #4caf50;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 1rem;
+}
+
+.button:hover {
+  background-color: #66bb6a;
+}
+
+.divider {
+  margin: 1.5rem 0;
+  color: #555;
+  font-weight: bold;
+  display: flex;
+  align-items: center;
+  text-align: center;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #444;
+}
+
+.divider:not(:empty)::before {
+  margin-right: .25em;
+}
+
+.divider:not(:empty)::after {
+  margin-left: .25em;
+}
+
+.googleButton {
+  background-color: #4285F4;
+  margin-top: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem; /* Adds space between icon and text */
+}
+
+.googleButton:hover {
+  background-color: #357ae8;
+}
+
+.footerText {
+  margin-top: 1.5rem;
+  color: #a0a0a0;
+}
+
+.link {
+  color: #66bb6a;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+}

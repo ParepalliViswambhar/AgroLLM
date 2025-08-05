@@ -1,0 +1,124 @@
+/* LandingPage.module.css */
+
+.landingContainer {
+  font-family: 'Arial', sans-serif;
+  color: #e0e0e0;
+  background-color: #121212;
+  min-height: 100vh;
+}
+
+.header {
+  background: #ffffff;
+  padding: 2rem;
+  text-align: center;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.header h1 {
+  color: #2e7d32;
+  margin-bottom: 0.5rem;
+}
+
+.mainContent {
+  padding: 2rem 1rem;
+}
+
+.heroSection {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: linear-gradient(to right, #2e7d32, #1b5e20);
+  color: white;
+  border-radius: 8px;
+  margin: 2rem auto;
+  max-width: 1200px;
+}
+
+.heroSection h2 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+}
+
+.ctaButtons {
+  margin-top: 2rem;
+}
+
+.ctaButton {
+  background-color: #66bb6a;
+  color: #ffffff;
+  padding: 0.8rem 1.5rem;
+  border: none;
+  border-radius: 25px;
+  text-decoration: none;
+  font-weight: bold;
+  margin: 0 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.ctaButton:hover {
+  background-color: #81c784;
+  transform: translateY(-2px);
+}
+
+.ctaButton.secondary {
+  background-color: transparent;
+  border: 2px solid white;
+  color: white;
+}
+
+.ctaButton.secondary:hover {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+}
+
+.featuresSection {
+  text-align: center;
+  padding: 2rem 0;
+  max-width: 1200px;
+  margin: 2rem auto;
+}
+
+.featuresSection h2 {
+  color: #e0e0e0;
+  margin-bottom: 2rem;
+}
+
+.featuresGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1.5rem;
+}
+
+.featureIcon {
+  font-size: 2.5rem;
+  color: #66bb6a;
+  margin-bottom: 1rem;
+}
+
+.featureCard {
+  background: #1e1e1e;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0,0,0,0.2);
+  transition: transform 0.3s ease;
+}
+
+.featureCard:hover {
+  transform: translateY(-5px);
+}
+
+.featureCard h3 {
+  color: #2e7d32;
+  margin-bottom: 1rem;
+}
+
+.footer {
+  text-align: center;
+  padding: 2rem;
+  background: #333;
+  color: white;
+  margin-top: 2rem;
+}
