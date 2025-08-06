@@ -14,7 +14,8 @@ try:
     client = Client(gradio_url, verbose=False)
     result = client.predict(
             question=question,
-            api_name="/predict"
+            image=None,
+            api_name="/answer_question"
     )
     print(result)
 except Exception as e:

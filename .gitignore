@@ -130,7 +130,7 @@ dist
 
 # Gatsby files
 .cache/
-public
+
 
 # Storybook build outputs
 .out
@@ -154,7 +154,6 @@ uploads/
 *.pkl
 *.h5
 *.weights
-models/
 data/
 datasets/
 

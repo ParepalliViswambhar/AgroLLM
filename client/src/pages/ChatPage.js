@@ -257,7 +257,7 @@ const ChatPage = () => {
               onClick={() => setCurrentChat(chat)}
             >
               <div className={styles.chatInfo}>
-                <p className={styles.chatTitle}>{chat.messages[0].content.substring(0, 30)+"..."}</p>
+                <p className={styles.chatTitle}>{(chat.messages && chat.messages.length > 0) ? chat.messages[0].content.substring(0, 20) + "..." : 'New Chat'}</p>
               </div>
               <button 
                 className={styles.deleteButton}
