@@ -1,14 +1,14 @@
-import React, { useState, useEffect, useRef, useContext } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getChats, createChat, predict, deleteChat, clearChats, updateChat, transcribeAudio } from '../services/api';
+import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio } from '../services/api';
 import styles from './ChatPage.module.css';
-import { FaMicrophone, FaPaperclip, FaPaperPlane } from 'react-icons/fa';
+import { FaMicrophone, FaPaperclip, FaPaperPlane, FaPlus, FaTrash, FaMoon, FaSun, FaSignOutAlt, FaRobot, FaLeaf, FaBars } from 'react-icons/fa';
 import ThemeToggle from '../components/ThemeToggle';
 
 const ChatPage = () => {
   const [chats, setChats] = useState([]);
   const [currentChat, setCurrentChat] = useState(null);
-  const [theme, setTheme] = useState('dark');
+  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -19,14 +19,23 @@ const ChatPage = () => {
   const audioChunksRef = useRef([]);
   const fileInputRef = React.createRef();
   const navigate = useNavigate();
+  const [userInfo, setUserInfo] = useState(null);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    const userInfo = localStorage.getItem('userInfo');
-    if (!userInfo) {
+    document.body.className = theme;
+    localStorage.setItem('theme', theme);
+  }, [theme]);
+
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem('userInfo');
+    if (!storedUserInfo) {
       navigate('/login');
     } else {
+      const parsedUserInfo = JSON.parse(storedUserInfo);
+      setUserInfo(parsedUserInfo);
       fetchChats();
-      setCurrentChat(null); // Start with a new chat
+      setCurrentChat(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -37,11 +46,14 @@ const ChatPage = () => {
     }
   }, [currentChat, isLoading]);
 
-  const fetchChats = () => {
-    getChats().then(response => {
+  const fetchChats = async () => {
+    try {
+      const response = await getChats();
       const reversedChats = response.data.reverse();
       setChats(reversedChats);
-    });
+    } catch (error) {
+      console.error('Failed to fetch chats:', error);
+    }
   };
 
   const handleToggleRecording = async () => {
@@ -104,71 +116,93 @@ const ChatPage = () => {
         alert('Failed to transcribe audio. Please try again.');
       } finally {
         setIsTranscribing(false);
-        setSelectedFile(null); // Reset after processing
+        setSelectedFile(null);
       }
     }
   };
 
   const handleSendMessage = async () => {
-    if (message.trim() === '' || isLoading) return;
+    if (!message.trim() || isLoading) return;
 
+    const currentMessage = message;
+    setMessage('');
     setIsLoading(true);
 
-    const userMessage = { sender: 'user', content: message };
-    let updatedMessages = currentChat ? [...currentChat.messages, userMessage] : [userMessage];
+    const userMessage = {
+      sender: 'user',
+      content: currentMessage,
+      timestamp: new Date().toISOString(),
+    };
 
-    if (currentChat) {
-      setCurrentChat({ ...currentChat, messages: updatedMessages });
-    } else {
-      const newChat = { user: JSON.parse(localStorage.getItem('userInfo'))._id, messages: updatedMessages };
-      setCurrentChat(newChat);
-    }
+    let activeChat = currentChat;
 
-    setMessage('');
-
-    predict(message).then(response => {
-      const botMessage = { sender: 'bot', content: response.data.answer };
-      updatedMessages = [...updatedMessages, botMessage];
-      
-      if (currentChat && currentChat._id) {
-        updateChat(currentChat._id, { messages: updatedMessages }).then(res => {
-            const updatedChats = chats.map(chat => chat._id === res.data._id ? res.data : chat);
-            setChats(updatedChats);
-            setCurrentChat(res.data);
+    try {
+      // If there is no active chat, create one.
+      if (!activeChat) {
+        const newChatResponse = await createChat({
+          title: currentMessage.substring(0, 30),
+          messages: [userMessage],
         });
+        activeChat = newChatResponse.data;
+        setChats(prevChats => [activeChat, ...prevChats]);
+        setCurrentChat(activeChat);
       } else {
-        createChat({ messages: updatedMessages }).then(res => {
-            setChats([res.data, ...chats]);
-            setCurrentChat(res.data);
-        });
+        // If a chat is active, update it with the new user message immediately.
+        const updatedMessages = [...activeChat.messages, userMessage];
+        setCurrentChat({ ...activeChat, messages: updatedMessages });
       }
-    }).finally(() => {
-        setIsLoading(false);
-    });
+
+      // Get the bot's response.
+      const botResponse = await predict(currentMessage);
+      const botMessage = {
+        sender: 'bot',
+        content: botResponse.data.answer,
+        timestamp: new Date().toISOString(),
+      };
+
+      // The final message list should include the previous messages, the new user message, and the bot's response.
+      const finalMessages = [...(activeChat ? activeChat.messages : []), userMessage, botMessage];
+
+      // Update the chat on the server.
+      const finalChatResponse = await updateChat(activeChat._id, { messages: finalMessages });
+
+      // Update the UI with the final, complete state.
+      setCurrentChat(finalChatResponse.data);
+      setChats(prevChats =>
+        prevChats.map(c => (c._id === finalChatResponse.data._id ? finalChatResponse.data : c))
+      );
+    } catch (error) {
+      console.error('Error during message sending:', error);
+      // In case of an error, revert to a consistent state.
+      fetchChats();
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleNewChat = () => {
     setCurrentChat(null);
+    setMessage('');
   };
 
-  const handleDeleteChat = (id) => {
-    deleteChat(id)
-      .then(() => {
-        setChats(chats.filter((chat) => chat._id !== id));
-        if (currentChat && currentChat._id === id) {
-          setCurrentChat(chats.length > 1 ? chats.filter(chat => chat._id !== id)[0] : null);
-        }
-      })
-      .catch((error) => {
-        console.error('Failed to delete chat:', error);
-      });
+  const handleDeleteChat = async (id) => {
+    try {
+      await deleteChat(id);
+      const updatedChats = chats.filter((chat) => chat._id !== id);
+      setChats(updatedChats);
+
+      if (currentChat && currentChat._id === id) {
+        setCurrentChat(updatedChats.length > 0 ? updatedChats[0] : null);
+      }
+    } catch (error) {
+      console.error('Failed to delete chat:', error);
+      alert('Failed to delete chat. Please try again.');
+    }
   };
 
   const handleClearChats = async () => {
     try {
-      const chatsToDelete = [...chats];
-      const deletePromises = chatsToDelete.map(chat => deleteChat(chat._id));
-      await Promise.all(deletePromises);
+      await Promise.all(chats.map(chat => deleteChat(chat._id)));
       setChats([]);
       setCurrentChat(null);
     } catch (error) {
@@ -177,7 +211,8 @@ const ChatPage = () => {
   };
 
   const handleThemeToggle = () => {
-    setTheme(theme === 'light' ? 'dark' : 'light');
+    const newTheme = theme === 'dark' ? 'light' : 'dark';
+    setTheme(newTheme);
   };
 
   const handleLogout = () => {
@@ -185,71 +220,120 @@ const ChatPage = () => {
     navigate('/login');
   };
 
+  const formatTime = (dateString) => {
+    if (!dateString) return '';
+    const date = new Date(dateString);
+    return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
+  };
+
   return (
-    <div className={`${styles.chatContainer} ${theme === 'dark' ? styles.dark : ''}`}>
+        <div className={`${styles.chatContainer} ${theme} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
       <div className={styles.sidebar}>
-        <h2 className={styles.sidebarHeading}>Chats</h2>
-        <button onClick={handleNewChat} className={styles.sidebarButton}>
-          + New Chat
-        </button>
+        <div className={styles.appHeader}>
+          <div className={styles.appLogo}>
+            <FaLeaf className={styles.logoIcon} />
+          </div>
+          <h1 className={styles.appTitle}>AgriChat</h1>
+        </div>
+
+        {userInfo && (
+          <div className={styles.userSection}>
+            <div className={styles.userName}>{userInfo.name || 'John Farmer'}</div>
+          </div>
+        )}
+
+        <div className={styles.recentChatsSection}>
+          <h2 className={styles.sectionTitle}>Recent Chats</h2>
+          <button className={styles.newChatButton} onClick={handleNewChat}>
+            <FaPlus className={styles.newChatIcon} />
+            New Chat
+          </button>
+        </div>
         <div className={styles.chatHistory}>
           {chats.map(chat => (
-            <div
-              key={chat._id}
-              className={`${styles.chatHistoryItem} ${currentChat && currentChat._id === chat._id ? styles.active : ''}`}
+            <div 
+              key={chat._id} 
+              className={`${styles.chatHistoryItem} ${currentChat?._id === chat._id ? styles.active : ''}`}
               onClick={() => setCurrentChat(chat)}
             >
-              <span>{chat.messages.length > 0 ? chat.messages[0].content.substring(0, 20) || 'New Chat' : 'New Chat'}...</span>
-              <button onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat._id); }} className={styles.deleteButton}>
-                &#x1F5D1;
+              <div className={styles.chatInfo}>
+                <p className={styles.chatTitle}>{chat.messages[0].content.substring(0, 30)+"..."}</p>
+              </div>
+              <button 
+                className={styles.deleteButton}
+                onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat._id); }}
+              >
+                <FaTrash />
               </button>
             </div>
           ))}
         </div>
-        <button onClick={handleClearChats} className={`${styles.sidebarButton} ${styles.dangerButton}`}>
-          Clear All Chats
-        </button>
-        <button onClick={handleLogout} className={styles.sidebarButton}>
-          Logout
-        </button>
-        <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+
+        <div className={styles.sidebarOptions}>
+          <button className={`${styles.sidebarButton} ${styles.dangerButton}`} onClick={handleClearChats}>
+            <FaTrash />
+            Clear All Chats
+          </button>
+          <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
+          <button className={styles.sidebarButton} onClick={handleLogout}>
+            <FaSignOutAlt />
+            Logout
+          </button>
+        </div>
       </div>
 
       <div className={styles.chatArea}>
+        <div className={styles.chatHeader}>
+          <FaRobot className={styles.chatHeaderIcon} />
+          <h2 className={styles.chatHeaderTitle}>AgriChat Assistant</h2>
+        </div>
+
         <div className={styles.messageArea} ref={messageAreaRef}>
-          {(!currentChat || currentChat.messages.length === 0) && !isLoading ? (
+          {currentChat === null ? (
             <div className={styles.welcomeContainer}>
-              <h2 className={styles.welcomeTitle}>🌾 AgroRAG Assistant with AI Classification</h2>
+              <h2 className={styles.welcomeTitle}>Welcome to AgriChat!</h2>
               <p className={styles.welcomeText}>
-                Ask questions about agriculture, farming practices, and crop management.
-                The system uses an AI language model to intelligently classify whether questions are agriculture-related.
+                Your AI-powered assistant for all things agriculture. Ask me about crop diseases, soil management, pest control, or the latest farming techniques.
               </p>
               <p className={styles.welcomeText}>
-                <strong>Agriculture Topics Include:</strong> Crops, Farming, Livestock, Soil, Irrigation, Fertilizers, Pest Control, etc.
+                To get started, type a message below or select a previous conversation.
               </p>
             </div>
           ) : (
-            currentChat?.messages.map((message, index) => (
-              <div key={index} className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
-                {message.content}
+            currentChat.messages.map((message, index) => (
+              <div key={index} className={`${styles.messageWrapper} ${message.sender === 'user' ? styles.userMessageWrapper : styles.botMessageWrapper}`}>
+                <div className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
+                  {message.content}
+                </div>
+                <div className={styles.messageTimestamp}>{formatTime(message.timestamp)}</div>
               </div>
             ))
           )}
-          {isTranscribing && (
-            <div className={`${styles.message} ${styles.botMessage} ${styles.processing}`}>
-              <span>Processing audio...</span>
-              <div className={styles.waveContainer}>
-                <div className={styles.wave}></div>
-                <div className={styles.wave}></div>
-                <div className={styles.wave}></div>
-                <div className={styles.wave}></div>
-                <div className={styles.wave}></div>
+          
+          {isLoading && !isTranscribing && !isRecording && (
+            <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
+              <div className={`${styles.message} ${styles.botMessage} ${styles.typingIndicator}`}>
+                <div className={styles.typingDots}>
+                  <span></span>
+                  <span></span>
+                  <span></span>
+                </div>
               </div>
             </div>
           )}
-          {isLoading && !isTranscribing && !isRecording && (
-            <div className={`${styles.message} ${styles.botMessage} ${styles.loading}`}>
-              Bot is typing...
+          
+          {isTranscribing && (
+            <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
+              <div className={`${styles.message} ${styles.botMessage} ${styles.processing}`}>
+                <span>Processing audio...</span>
+                <div className={styles.waveContainer}>
+                  <div className={styles.wave}></div>
+                  <div className={styles.wave}></div>
+                  <div className={styles.wave}></div>
+                  <div className={styles.wave}></div>
+                  <div className={styles.wave}></div>
+                </div>
+              </div>
             </div>
           )}
         </div>
@@ -263,61 +347,66 @@ const ChatPage = () => {
               </div>
             </div>
           )}
-          <form
-            onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-            className={`${styles.inputForm} ${theme === 'dark' ? styles.dark : ''}`}>
-            <input
-              type="file"
-              id="file-upload"
-              style={{ display: 'none' }}
-              onChange={handleFileChange}
-              accept="audio/*"
-              ref={fileInputRef}
-            />
-            <button
-              type="button"
-              className={`${styles.iconButton} ${styles.clipButton}`}
-              onClick={() => fileInputRef.current.click()}>
-              <FaPaperclip />
-            </button>
-
-            <button
-              type="button"
-              className={`${styles.iconButton} ${styles.micButton} ${
-                isRecording ? styles.recording : ''
-              }`}
-              onClick={handleToggleRecording}>
-              <FaMicrophone />
-            </button>
-
-                        {isRecording ? (
-              <div className={styles.recordingIndicatorInForm}>
-                <span>Recording...</span>
-                <div className={styles.waveContainer}>
-                  <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                  <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                  <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                  <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                  <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                </div>
-              </div>
-            ) : (
+          
+          <div className={styles.inputContainer}>
+            <form
+              onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+              className={styles.inputForm}>
               <input
-                type="text"
-                className={styles.inputField}
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                placeholder="Ask me anything..."
-                disabled={isLoading}
+                type="file"
+                id="file-upload"
+                style={{ display: 'none' }}
+                onChange={handleFileChange}
+                accept="audio/*"
+                ref={fileInputRef}
               />
-            )}
-            <button
-              type="submit"
-              className={styles.sendButton}
-              disabled={isLoading || !message.trim()}>
-              <FaPaperPlane />
-            </button>
-          </form>
+              
+              <button
+                type="button"
+                className={`${styles.iconButton} ${styles.clipButton}`}
+                onClick={() => fileInputRef.current.click()}>
+                <FaPaperclip />
+              </button>
+
+              <button
+                type="button"
+                className={`${styles.iconButton} ${styles.micButton} ${
+                  isRecording ? styles.recording : ''
+                }`}
+                onClick={handleToggleRecording}>
+                <FaMicrophone />
+              </button>
+
+              {isRecording ? (
+                <div className={styles.recordingIndicatorInForm}>
+                  <span>Recording...</span>
+                  <div className={styles.waveContainer}>
+                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
+                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
+                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
+                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
+                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
+                  </div>
+                </div>
+              ) : (
+                <input
+                  type="text"
+                  className={styles.inputField}
+                  value={message}
+                  onChange={(e) => setMessage(e.target.value)}
+                  placeholder="Ask me anything about agriculture..."
+                  disabled={isLoading}
+                />
+              )}
+              
+              <button
+                type="submit"
+                className={styles.sendButton}
+                disabled={isLoading || !message.trim()}>
+                <FaPaperPlane />
+              </button>
+            </form>
+          </div>
         </div>
       </div>
     </div>
