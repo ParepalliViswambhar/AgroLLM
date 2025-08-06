@@ -135,6 +135,7 @@ const ChatPage = () => {
     };
 
     let activeChat = currentChat;
+    let newChatCreated = false;
 
     try {
       // If there is no active chat, create one.
@@ -146,6 +147,7 @@ const ChatPage = () => {
         activeChat = newChatResponse.data;
         setChats(prevChats => [activeChat, ...prevChats]);
         setCurrentChat(activeChat);
+        newChatCreated = true;
       } else {
         // If a chat is active, update it with the new user message immediately.
         const updatedMessages = [...activeChat.messages, userMessage];
@@ -160,8 +162,10 @@ const ChatPage = () => {
         timestamp: new Date().toISOString(),
       };
 
-      // The final message list should include the previous messages, the new user message, and the bot's response.
-      const finalMessages = [...(activeChat ? activeChat.messages : []), userMessage, botMessage];
+      // If a new chat was created, its messages are already up-to-date with the user message.
+      // Otherwise, for an existing chat, we need to add the new user message.
+      const baseMessages = newChatCreated ? activeChat.messages : [...activeChat.messages, userMessage];
+      const finalMessages = [...baseMessages, botMessage];
 
       // Update the chat on the server.
       const finalChatResponse = await updateChat(activeChat._id, { messages: finalMessages });

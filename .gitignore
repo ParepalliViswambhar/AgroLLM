@@ -164,7 +164,6 @@ datasets/
 .python-version
 
 # Environments
-.env
 .venv
 env/
 venv/
