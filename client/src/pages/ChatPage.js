@@ -2,8 +2,8 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio } from '../services/api';
 import styles from './ChatPage.module.css';
-import { FaMicrophone, FaPaperclip, FaPaperPlane, FaPlus, FaTrash, FaMoon, FaSun, FaSignOutAlt, FaRobot, FaLeaf, FaBars } from 'react-icons/fa';
-import ThemeToggle from '../components/ThemeToggle';
+import Sidebar from '../components/Chat/Sidebar';
+import ChatArea from '../components/Chat/ChatArea';
 
 const ChatPage = () => {
   const [chats, setChats] = useState([]);
@@ -15,9 +15,13 @@ const ChatPage = () => {
   const [isRecording, setIsRecording] = useState(false);
   const messageAreaRef = useRef(null);
   const [selectedFile, setSelectedFile] = useState(null);
+  const [selectedImage, setSelectedImage] = useState(null);
   const mediaRecorderRef = useRef(null);
   const audioChunksRef = useRef([]);
-  const fileInputRef = React.createRef();
+  const audioFileInputRef = React.createRef();
+  const imageFileInputRef = React.createRef();
+  const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -45,6 +49,15 @@ const ChatPage = () => {
       messageAreaRef.current.scrollTop = messageAreaRef.current.scrollHeight;
     }
   }, [currentChat, isLoading]);
+
+  useEffect(() => {
+    // Clean up the object URL on component unmount or when the URL changes
+    return () => {
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+    };
+  }, [imagePreviewUrl]);
 
   const fetchChats = async () => {
     try {
@@ -103,10 +116,15 @@ const ChatPage = () => {
     }
   };
 
-  const handleFileChange = async (event) => {
+  const handleAudioFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedFile(file);
+      setSelectedImage(null);
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+      setImagePreviewUrl(null);
       try {
         setIsTranscribing(true);
         const response = await transcribeAudio(file);
@@ -118,6 +136,28 @@ const ChatPage = () => {
         setIsTranscribing(false);
         setSelectedFile(null);
       }
+    }
+  };
+
+  const handleClearAttachment = () => {
+    setSelectedFile(null);
+    setSelectedImage(null);
+    if (imagePreviewUrl) {
+      URL.revokeObjectURL(imagePreviewUrl);
+    }
+    setImagePreviewUrl(null);
+  };
+
+  const handleImageFileChange = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      setSelectedImage(file);
+      setSelectedFile(null);
+      setMessage(''); // Clear message when image is selected
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+      setImagePreviewUrl(URL.createObjectURL(file));
     }
   };
 
@@ -181,6 +221,12 @@ const ChatPage = () => {
       fetchChats();
     } finally {
       setIsLoading(false);
+      setSelectedFile(null);
+      setSelectedImage(null);
+      if (imagePreviewUrl) {
+        URL.revokeObjectURL(imagePreviewUrl);
+      }
+      setImagePreviewUrl(null);
     }
   };
 
@@ -231,188 +277,41 @@ const ChatPage = () => {
   };
 
   return (
-        <div className={`${styles.chatContainer} ${theme} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
-      <div className={styles.sidebar}>
-        <div className={styles.appHeader}>
-          <div className={styles.appLogo}>
-            <FaLeaf className={styles.logoIcon} />
-          </div>
-          <h1 className={styles.appTitle}>AgriChat</h1>
-        </div>
-
-        {userInfo && (
-          <div className={styles.userSection}>
-            <div className={styles.userName}>{userInfo.name || 'John Farmer'}</div>
-          </div>
-        )}
-
-        <div className={styles.recentChatsSection}>
-          <h2 className={styles.sectionTitle}>Recent Chats</h2>
-          <button className={styles.newChatButton} onClick={handleNewChat}>
-            <FaPlus className={styles.newChatIcon} />
-            New Chat
-          </button>
-        </div>
-        <div className={styles.chatHistory}>
-          {chats.map(chat => (
-            <div 
-              key={chat._id} 
-              className={`${styles.chatHistoryItem} ${currentChat?._id === chat._id ? styles.active : ''}`}
-              onClick={() => setCurrentChat(chat)}
-            >
-              <div className={styles.chatInfo}>
-                <p className={styles.chatTitle}>{(chat.messages && chat.messages.length > 0) ? chat.messages[0].content.substring(0, 20) + "..." : 'New Chat'}</p>
-              </div>
-              <button 
-                className={styles.deleteButton}
-                onClick={(e) => { e.stopPropagation(); handleDeleteChat(chat._id); }}
-              >
-                <FaTrash />
-              </button>
-            </div>
-          ))}
-        </div>
-
-        <div className={styles.sidebarOptions}>
-          <button className={`${styles.sidebarButton} ${styles.dangerButton}`} onClick={handleClearChats}>
-            <FaTrash />
-            Clear All Chats
-          </button>
-          <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
-          <button className={styles.sidebarButton} onClick={handleLogout}>
-            <FaSignOutAlt />
-            Logout
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.chatArea}>
-        <div className={styles.chatHeader}>
-          <FaRobot className={styles.chatHeaderIcon} />
-          <h2 className={styles.chatHeaderTitle}>AgriChat Assistant</h2>
-        </div>
-
-        <div className={styles.messageArea} ref={messageAreaRef}>
-          {currentChat === null ? (
-            <div className={styles.welcomeContainer}>
-              <h2 className={styles.welcomeTitle}>Welcome to AgriChat!</h2>
-              <p className={styles.welcomeText}>
-                Your AI-powered assistant for all things agriculture. Ask me about crop diseases, soil management, pest control, or the latest farming techniques.
-              </p>
-              <p className={styles.welcomeText}>
-                To get started, type a message below or select a previous conversation.
-              </p>
-            </div>
-          ) : (
-            currentChat.messages.map((message, index) => (
-              <div key={index} className={`${styles.messageWrapper} ${message.sender === 'user' ? styles.userMessageWrapper : styles.botMessageWrapper}`}>
-                <div className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
-                  {message.content}
-                </div>
-                <div className={styles.messageTimestamp}>{formatTime(message.timestamp)}</div>
-              </div>
-            ))
-          )}
-          
-          {isLoading && !isTranscribing && !isRecording && (
-            <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
-              <div className={`${styles.message} ${styles.botMessage} ${styles.typingIndicator}`}>
-                <div className={styles.typingDots}>
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-              </div>
-            </div>
-          )}
-          
-          {isTranscribing && (
-            <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
-              <div className={`${styles.message} ${styles.botMessage} ${styles.processing}`}>
-                <span>Processing audio...</span>
-                <div className={styles.waveContainer}>
-                  <div className={styles.wave}></div>
-                  <div className={styles.wave}></div>
-                  <div className={styles.wave}></div>
-                  <div className={styles.wave}></div>
-                  <div className={styles.wave}></div>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <div className={styles.inputArea}>
-          {selectedFile && (
-            <div className={styles.fileIndicatorContainer}>
-              <div className={`${styles.fileIndicator} ${theme === 'dark' ? styles.dark : ''}`}>
-                <FaPaperclip />
-                <span className={styles.fileName}>{selectedFile.name}</span>
-              </div>
-            </div>
-          )}
-          
-          <div className={styles.inputContainer}>
-            <form
-              onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
-              className={styles.inputForm}>
-              <input
-                type="file"
-                id="file-upload"
-                style={{ display: 'none' }}
-                onChange={handleFileChange}
-                accept="audio/*"
-                ref={fileInputRef}
-              />
-              
-              <button
-                type="button"
-                className={`${styles.iconButton} ${styles.clipButton}`}
-                onClick={() => fileInputRef.current.click()}>
-                <FaPaperclip />
-              </button>
-
-              <button
-                type="button"
-                className={`${styles.iconButton} ${styles.micButton} ${
-                  isRecording ? styles.recording : ''
-                }`}
-                onClick={handleToggleRecording}>
-                <FaMicrophone />
-              </button>
-
-              {isRecording ? (
-                <div className={styles.recordingIndicatorInForm}>
-                  <span>Recording...</span>
-                  <div className={styles.waveContainer}>
-                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                    <div className={`${styles.wave} ${styles.recordingWave}`}></div>
-                  </div>
-                </div>
-              ) : (
-                <input
-                  type="text"
-                  className={styles.inputField}
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  placeholder="Ask me anything about agriculture..."
-                  disabled={isLoading}
-                />
-              )}
-              
-              <button
-                type="submit"
-                className={styles.sendButton}
-                disabled={isLoading || !message.trim()}>
-                <FaPaperPlane />
-              </button>
-            </form>
-          </div>
-        </div>
-      </div>
+    <div className={`${styles.chatContainer} ${theme} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
+      <Sidebar 
+        userInfo={userInfo}
+        chats={chats}
+        currentChat={currentChat}
+        handleNewChat={handleNewChat}
+        setCurrentChat={setCurrentChat}
+        handleDeleteChat={handleDeleteChat}
+        handleClearChats={handleClearChats}
+        theme={theme}
+        handleThemeToggle={handleThemeToggle}
+        handleLogout={handleLogout}
+      />
+      <ChatArea 
+        currentChat={currentChat}
+        isLoading={isLoading}
+        isTranscribing={isTranscribing}
+        isRecording={isRecording}
+        messageAreaRef={messageAreaRef}
+        formatTime={formatTime}
+        imagePreviewUrl={imagePreviewUrl}
+        handleClearAttachment={handleClearAttachment}
+        selectedFile={selectedFile}
+        theme={theme}
+        handleSendMessage={handleSendMessage}
+        handleAudioFileChange={handleAudioFileChange}
+        audioFileInputRef={audioFileInputRef}
+        handleImageFileChange={handleImageFileChange}
+        imageFileInputRef={imageFileInputRef}
+        isAttachmentMenuOpen={isAttachmentMenuOpen}
+        setIsAttachmentMenuOpen={setIsAttachmentMenuOpen}
+        handleToggleRecording={handleToggleRecording}
+        message={message}
+        setMessage={setMessage}
+      />
     </div>
   );
 };
