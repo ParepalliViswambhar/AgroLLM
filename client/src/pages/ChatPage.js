@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio } from '../services/api';
+import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio, getAnswer } from '../services/api';
+import { uploadImage as uploadChatImageSvc, removeImage as removeChatImageSvc, fetchImage as fetchChatImage } from '../services/imageChatHandler';
 import styles from './ChatPage.module.css';
 import Sidebar from '../components/Chat/Sidebar';
 import ChatArea from '../components/Chat/ChatArea';
@@ -51,7 +52,46 @@ const ChatPage = () => {
   }, [currentChat, isLoading]);
 
   useEffect(() => {
-    // Clean up the object URL on component unmount or when the URL changes
+    // When switching chats, fetch persisted image for that chat
+    const loadPersistedImage = async () => {
+      if (currentChat && currentChat._id) {
+        // Revoke previous URL before setting a new one
+        if (imagePreviewUrl) {
+          URL.revokeObjectURL(imagePreviewUrl);
+        }
+        const url = await fetchChatImage(currentChat._id);
+        // If the chat already has an image placeholder message, attach the URL to that message
+        const hasPlaceholder = currentChat.messages?.some(
+          (m) => m.sender === 'user' && m.content === '__image__'
+        );
+        if (hasPlaceholder && url) {
+          const enhanced = {
+            ...currentChat,
+            messages: currentChat.messages.map((m) =>
+              m.sender === 'user' && m.content === '__image__' ? { ...m, imageUrl: url } : m
+            ),
+          };
+          setCurrentChat(enhanced);
+          setImagePreviewUrl(null);
+        } else {
+          setImagePreviewUrl(url); // may be null if none exists
+        }
+        setSelectedImage(null);
+      } else {
+        // No active chat
+        if (imagePreviewUrl) {
+          URL.revokeObjectURL(imagePreviewUrl);
+        }
+        setImagePreviewUrl(null);
+        setSelectedImage(null);
+      }
+    };
+    loadPersistedImage();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentChat?._id]);
+
+  useEffect(() => {
+    // Clean up the object URL on component unmount
     return () => {
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
@@ -139,25 +179,37 @@ const ChatPage = () => {
     }
   };
 
-  const handleClearAttachment = () => {
+  const handleClearAttachment = async () => {
     setSelectedFile(null);
     setSelectedImage(null);
+    if (currentChat && currentChat._id) {
+      await removeChatImageSvc(currentChat._id);
+    }
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
     }
     setImagePreviewUrl(null);
   };
 
-  const handleImageFileChange = (event) => {
+  const handleImageFileChange = async (event) => {
     const file = event.target.files[0];
     if (file) {
       setSelectedImage(file);
       setSelectedFile(null);
-      setMessage(''); // Clear message when image is selected
+      // Keep message for question_text input; do not force clear
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
       }
       setImagePreviewUrl(URL.createObjectURL(file));
+      // If chat exists, upload immediately to persist across sessions
+      try {
+        if (currentChat && currentChat._id) {
+          await uploadChatImageSvc(currentChat._id, file);
+        }
+      } catch (e) {
+        console.error('Failed to upload image:', e);
+        alert('Failed to upload image. Please try another file.');
+      }
     }
   };
 
@@ -176,26 +228,99 @@ const ChatPage = () => {
 
     let activeChat = currentChat;
     let newChatCreated = false;
+    const hasImage = Boolean(selectedImage || imagePreviewUrl);
+    const localImageUrl = imagePreviewUrl || null;
+    const imagePlaceholderMsg = hasImage
+      ? {
+          sender: 'user',
+          content: '__image__',
+          timestamp: new Date().toISOString(),
+        }
+      : null;
+    let replacedWithPersisted = false;
 
     try {
       // If there is no active chat, create one.
       if (!activeChat) {
+        const initialMessages = imagePlaceholderMsg
+          ? [userMessage, imagePlaceholderMsg]
+          : [userMessage];
         const newChatResponse = await createChat({
           title: currentMessage.substring(0, 30),
-          messages: [userMessage],
+          messages: initialMessages,
         });
         activeChat = newChatResponse.data;
-        setChats(prevChats => [activeChat, ...prevChats]);
-        setCurrentChat(activeChat);
+        // Enhance UI with imageUrl for the placeholder, if any
+        if (imagePlaceholderMsg && localImageUrl) {
+          const enhanced = {
+            ...activeChat,
+            messages: activeChat.messages.map(m =>
+              m.sender === 'user' && m.content === '__image__'
+                ? { ...m, imageUrl: localImageUrl }
+                : m
+            ),
+          };
+          setChats(prevChats => [enhanced, ...prevChats]);
+          setCurrentChat(enhanced);
+        } else {
+          setChats(prevChats => [activeChat, ...prevChats]);
+          setCurrentChat(activeChat);
+        }
         newChatCreated = true;
       } else {
         // If a chat is active, update it with the new user message immediately.
-        const updatedMessages = [...activeChat.messages, userMessage];
-        setCurrentChat({ ...activeChat, messages: updatedMessages });
+        const updatedMessages = imagePlaceholderMsg
+          ? [...activeChat.messages, userMessage, imagePlaceholderMsg]
+          : [...activeChat.messages, userMessage];
+        // Enhance UI with image bubble immediately
+        const enhanced = imagePlaceholderMsg && localImageUrl
+          ? {
+              ...activeChat,
+              messages: updatedMessages.map(m =>
+                m.sender === 'user' && m.content === '__image__'
+                  ? { ...m, imageUrl: localImageUrl }
+                  : m
+              ),
+            }
+          : { ...activeChat, messages: updatedMessages };
+        setCurrentChat(enhanced);
       }
+      // If a new image is selected and not yet persisted (no chat before), upload now
+      let botResponse;
+      if (hasImage && activeChat && activeChat._id) {
+        try {
+          if (selectedImage) {
+            await uploadChatImageSvc(activeChat._id, selectedImage);
+            const persistedUrl = await fetchChatImage(activeChat._id);
+            if (persistedUrl) {
+              setCurrentChat(prev => {
+                if (!prev) return prev;
+                const msgs = [...prev.messages];
+                for (let i = msgs.length - 1; i >= 0; i--) {
+                  if (msgs[i].sender === 'user' && msgs[i].content === '__image__') {
+                    msgs[i] = { ...msgs[i], imageUrl: persistedUrl };
+                    break;
+                  }
+                }
+                return { ...prev, messages: msgs };
+              });
+              replacedWithPersisted = true;
+            }
+          }
 
-      // Get the bot's response.
-      const botResponse = await predict(currentMessage);
+          botResponse = await getAnswer(currentMessage, activeChat._id);
+        } catch (err) {
+          console.error('Image-based prediction failed:', err);
+          if (err?.response?.status === 404 || (err.message && err.message.includes('No persisted image'))) {
+            console.warn('Falling back to text-only prediction.');
+            botResponse = await predict(currentMessage);
+          } else {
+            throw err;
+          }
+        }
+      } else {
+        botResponse = await predict(currentMessage);
+      }
       const botMessage = {
         sender: 'bot',
         content: botResponse.data.answer,
@@ -204,17 +329,30 @@ const ChatPage = () => {
 
       // If a new chat was created, its messages are already up-to-date with the user message.
       // Otherwise, for an existing chat, we need to add the new user message.
-      const baseMessages = newChatCreated ? activeChat.messages : [...activeChat.messages, userMessage];
+      const baseMessages = newChatCreated
+        ? activeChat.messages
+        : imagePlaceholderMsg
+          ? [...activeChat.messages, userMessage, imagePlaceholderMsg]
+          : [...activeChat.messages, userMessage];
       const finalMessages = [...baseMessages, botMessage];
 
       // Update the chat on the server.
       const finalChatResponse = await updateChat(activeChat._id, { messages: finalMessages });
 
       // Update the UI with the final, complete state.
-      setCurrentChat(finalChatResponse.data);
-      setChats(prevChats =>
-        prevChats.map(c => (c._id === finalChatResponse.data._id ? finalChatResponse.data : c))
-      );
+      const enhancedFinal = imagePlaceholderMsg && localImageUrl
+        ? {
+            ...finalChatResponse.data,
+            messages: finalChatResponse.data.messages.map(m =>
+              m.sender === 'user' && m.content === '__image__'
+                ? { ...m, imageUrl: localImageUrl }
+                : m
+            ),
+          }
+        : finalChatResponse.data;
+
+      setCurrentChat(enhancedFinal);
+      setChats(prevChats => prevChats.map(c => (c._id === enhancedFinal._id ? enhancedFinal : c)));
     } catch (error) {
       console.error('Error during message sending:', error);
       // In case of an error, revert to a consistent state.
@@ -222,11 +360,13 @@ const ChatPage = () => {
     } finally {
       setIsLoading(false);
       setSelectedFile(null);
-      setSelectedImage(null);
-      if (imagePreviewUrl) {
-        URL.revokeObjectURL(imagePreviewUrl);
+      // Clear local image preview to simulate moving it to the chat bubble
+      // Revoke only if we replaced with persisted blob to avoid breaking the chat bubble
+      if (imagePreviewUrl && replacedWithPersisted) {
+        try { URL.revokeObjectURL(imagePreviewUrl); } catch {}
       }
       setImagePreviewUrl(null);
+      setSelectedImage(null);
     }
   };
 

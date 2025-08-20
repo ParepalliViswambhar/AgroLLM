@@ -4,3 +4,4 @@ pydub
 
 gradio_client
 python-dotenv
+pymongo

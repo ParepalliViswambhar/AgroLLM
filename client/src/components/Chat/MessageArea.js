@@ -25,7 +25,11 @@ const MessageArea = ({
         currentChat.messages.map((message, index) => (
           <div key={index} className={`${styles.messageWrapper} ${message.sender === 'user' ? styles.userMessageWrapper : styles.botMessageWrapper}`}>
             <div className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
-              {message.content}
+              {message.imageUrl ? (
+                <img src={message.imageUrl} alt="Attachment" className={styles.imagePreview} />
+              ) : (
+                message.content
+              )}
             </div>
             <div className={styles.messageTimestamp}>{formatTime(message.timestamp)}</div>
           </div>

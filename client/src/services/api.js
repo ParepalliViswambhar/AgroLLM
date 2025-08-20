@@ -19,6 +19,25 @@ export const updateChat = (id, data) => API.put(`/chats/${id}`, data);
 export const clearChats = () => API.delete('/chats/clear');
 export const predict = (question) => API.post('/chats/predict', { question });
 
+// Image-enabled prediction
+export const getAnswer = (question_text, chatId) =>
+  API.post('/chats/get_answer', { question_text, chatId });
+
+// Image persistence endpoints
+export const uploadChatImage = (chatId, file) => {
+  const formData = new FormData();
+  formData.append('image', file);
+  return API.post(`/chats/${chatId}/image`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+export const getChatImage = async (chatId) => {
+  return API.get(`/chats/${chatId}/image`, { responseType: 'blob' });
+};
+
+export const deleteChatImage = (chatId) => API.delete(`/chats/${chatId}/image`);
+
 export const transcribeAudio = async (audioFile) => {
   const formData = new FormData();
   formData.append('audio', audioFile);
