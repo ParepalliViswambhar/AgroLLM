@@ -1,0 +1,7 @@
+# For transcription with speech_recognition. Note: ffmpeg should be installed for broad audio format support.
+SpeechRecognition
+pydub
+
+gradio_client
+python-dotenv
+pymongo

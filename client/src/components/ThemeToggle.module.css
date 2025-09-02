@@ -1,0 +1,37 @@
+.themeToggleButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--border-color);
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: 'Inter', sans-serif;
+  text-align: left;
+}
+
+.themeToggleButton:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-primary);
+}
+
+.themeToggleButton:focus {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+}
+
+.themeText {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.themeToggleButton svg {
+  margin-right: 0.75rem;
+  font-size: 1.1rem;
+}
