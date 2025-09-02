@@ -97,8 +97,8 @@ const ChatPage = () => {
     };
   }, [imagePreviewUrl]);
 
-  // Safety check to ensure recording state is properly reset
   useEffect(() => {
+    // Safety check to ensure recording state is properly reset
     if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state !== 'recording') {
       setIsRecording(false);
     }
@@ -267,9 +267,7 @@ const ChatPage = () => {
           const enhanced = {
             ...activeChat,
             messages: activeChat.messages.map(m =>
-              m.sender === 'user' && m.content === '__image__'
-                ? { ...m, imageUrl: localImageUrl }
-                : m
+              m.sender === 'user' && m.content === '__image__' ? { ...m, imageUrl: localImageUrl } : m
             ),
           };
           setChats(prevChats => [enhanced, ...prevChats]);
@@ -290,7 +288,7 @@ const ChatPage = () => {
           ? {
               ...activeChat,
               messages: updatedMessages.map(m =>
-                m.sender === 'user' && m.content === '__image__' && !m.imageUrl
+                m.sender === 'user' && m.content === '__image__' ? { ...m, imageUrl: localImageUrl } : m
                   ? { ...m, imageUrl: localImageUrl }
                   : m
               ),
