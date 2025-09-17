@@ -1,6 +1,6 @@
 import React from 'react';
 import styles from '../../pages/ChatPage.module.css';
-import { FaMicrophone, FaPaperclip, FaPaperPlane } from 'react-icons/fa';
+import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle } from 'react-icons/io5';
 
 const InputArea = ({
@@ -20,6 +20,7 @@ const InputArea = ({
   message,
   setMessage,
   isLoading,
+  isTranscribing,
 }) => {
   return (
     <div className={styles.inputArea}>
@@ -31,18 +32,12 @@ const InputArea = ({
           </button>
         </div>
       )}
-      {selectedFile && (
-        <div className={styles.fileIndicatorContainer}>
-          <div className={`${styles.fileIndicator} ${theme === 'dark' ? styles.dark : ''}`}>
-            <IoMusicalNotesOutline />
-            <span className={styles.fileName}>Audio file attached</span>
-            <button onClick={handleClearAttachment} className={styles.clearAttachmentButton}>
-              <IoCloseCircle />
-            </button>
-          </div>
+      {isTranscribing && (
+        <div className={styles.audioProcessingContainer}>
+          <FaSpinner className={styles.spinner} />
+          <span>Processing audio...</span>
         </div>
       )}
-      
       <div className={styles.inputContainer}>
         <form
           onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
@@ -118,8 +113,8 @@ const InputArea = ({
           
           <button
             type="submit"
-            className={styles.sendButton}
-            disabled={isLoading || !message.trim()}>
+            className={`${styles.sendButton} ${(message.trim() || imagePreviewUrl) ? styles.active : ''}`}
+            disabled={isLoading || (!message.trim() && !imagePreviewUrl)}>
             <FaPaperPlane />
           </button>
         </form>

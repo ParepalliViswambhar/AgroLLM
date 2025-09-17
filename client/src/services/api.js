@@ -36,7 +36,16 @@ export const getChatImage = async (chatId) => {
   return API.get(`/chats/${chatId}/image`, { responseType: 'blob' });
 };
 
+export const getChatImageById = async (chatId, imageId) => {
+  return API.get(`/chats/${chatId}/image/${imageId}`, { responseType: 'blob' });
+};
+
+export const getAllChatImages = async (chatId) => {
+  return API.get(`/chats/${chatId}/images`);
+};
+
 export const deleteChatImage = (chatId) => API.delete(`/chats/${chatId}/image`);
+export const deleteChatImageById = (chatId, imageId) => API.delete(`/chats/${chatId}/image/${imageId}`);
 
 export const transcribeAudio = async (audioFile) => {
   const formData = new FormData();

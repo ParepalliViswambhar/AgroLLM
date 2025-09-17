@@ -1,15 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio, getAnswer } from '../services/api';
-import { uploadImage as uploadChatImageSvc, removeImage as removeChatImageSvc, fetchImage as fetchChatImage } from '../services/imageChatHandler';
+import { uploadImage as uploadChatImageSvc, removeImage as removeChatImageSvc, fetchImage as fetchChatImage, fetchAllImages, fetchImageById } from '../services/imageChatHandler';
+import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChatPage.module.css';
 import Sidebar from '../components/Chat/Sidebar';
 import ChatArea from '../components/Chat/ChatArea';
+import InputArea from '../components/Chat/InputArea';
+
+import ConfirmationModal from '../components/common/ConfirmationModal';
 
 const ChatPage = () => {
   const [chats, setChats] = useState([]);
   const [currentChat, setCurrentChat] = useState(null);
-  const [theme, setTheme] = useState(() => localStorage.getItem('theme') || 'dark');
+  const { theme, toggleTheme } = useTheme();
   const [message, setMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [isTranscribing, setIsTranscribing] = useState(false);
@@ -27,10 +31,10 @@ const ChatPage = () => {
   const [userInfo, setUserInfo] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
-  useEffect(() => {
-    document.body.className = theme;
-    localStorage.setItem('theme', theme);
-  }, [theme]);
+  // Modal states moved from Sidebar
+  const [showClearChatsModal, setShowClearChatsModal] = useState(false);
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
+
 
   useEffect(() => {
     const storedUserInfo = localStorage.getItem('userInfo');
@@ -51,34 +55,40 @@ const ChatPage = () => {
     }
   }, [currentChat, isLoading]);
 
+
   useEffect(() => {
-    // When switching chats, fetch persisted image for that chat
-    const loadPersistedImage = async () => {
+    const loadPersistedImages = async () => {
       if (currentChat && currentChat._id) {
-        // Revoke previous URL before setting a new one
         if (imagePreviewUrl) {
           URL.revokeObjectURL(imagePreviewUrl);
         }
-        const url = await fetchChatImage(currentChat._id);
-        // If the chat already has an image placeholder message, attach the URL to that message
-        const hasPlaceholder = currentChat.messages?.some(
-          (m) => m.sender === 'user' && m.content === '__image__'
-        );
-        if (hasPlaceholder && url) {
+        
+        try {
+          const images = await fetchAllImages(currentChat._id);
+          const urlPromises = images.map(img => fetchImageById(currentChat._id, img._id));
+          const urls = await Promise.all(urlPromises);
+          
+          // Match images to __image__ placeholders in chronological order
+          let imageIdx = 0;
           const enhanced = {
             ...currentChat,
-            messages: currentChat.messages.map((m) =>
-              m.sender === 'user' && m.content === '__image__' ? { ...m, imageUrl: url } : m
-            ),
+            messages: currentChat.messages.map((m) => {
+              if (m.sender === 'user' && m.content === '__image__' && !m.imageUrl && urls[imageIdx]) {
+                const msgWithUrl = { ...m, imageUrl: urls[imageIdx] };
+                imageIdx++;
+                return msgWithUrl;
+              }
+              return m;
+            })
           };
           setCurrentChat(enhanced);
-          setImagePreviewUrl(null);
-        } else {
-          setImagePreviewUrl(url); // may be null if none exists
+        } catch (error) {
+          console.error('Failed to load images:', error);
         }
+        
+        setImagePreviewUrl(null);
         setSelectedImage(null);
       } else {
-        // No active chat
         if (imagePreviewUrl) {
           URL.revokeObjectURL(imagePreviewUrl);
         }
@@ -86,8 +96,7 @@ const ChatPage = () => {
         setSelectedImage(null);
       }
     };
-    loadPersistedImage();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    loadPersistedImages();
   }, [currentChat?._id]);
 
   useEffect(() => {
@@ -98,6 +107,13 @@ const ChatPage = () => {
       }
     };
   }, [imagePreviewUrl]);
+
+  // Safety check to ensure recording state is properly reset
+  useEffect(() => {
+    if (isRecording && mediaRecorderRef.current && mediaRecorderRef.current.state !== 'recording') {
+      setIsRecording(false);
+    }
+  }, [isRecording]);
 
   const fetchChats = async () => {
     try {
@@ -114,6 +130,8 @@ const ChatPage = () => {
       if (mediaRecorderRef.current && mediaRecorderRef.current.state === 'recording') {
         mediaRecorderRef.current.stop();
       }
+      // Ensure recording state is reset
+      setIsRecording(false);
     } else {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -179,17 +197,17 @@ const ChatPage = () => {
     }
   };
 
+  // Only remove image from DB when user explicitly clears attachment
   const handleClearAttachment = async () => {
     setSelectedFile(null);
     setSelectedImage(null);
-    if (currentChat && currentChat._id) {
-      await removeChatImageSvc(currentChat._id);
-    }
     if (imagePreviewUrl) {
       URL.revokeObjectURL(imagePreviewUrl);
     }
     setImagePreviewUrl(null);
   };
+
+  // Do NOT call removeChatImageSvc anywhere else. Images are only deleted on explicit clear.
 
   const handleImageFileChange = async (event) => {
     const file = event.target.files[0];
@@ -200,11 +218,31 @@ const ChatPage = () => {
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
       }
-      setImagePreviewUrl(URL.createObjectURL(file));
+      const previewUrl = URL.createObjectURL(file);
+      setImagePreviewUrl(previewUrl);
+      console.log('[FRONTEND] Selected image file:', file, 'Preview URL:', previewUrl);
       // If chat exists, upload immediately to persist across sessions
       try {
         if (currentChat && currentChat._id) {
           await uploadChatImageSvc(currentChat._id, file);
+          console.log('[FRONTEND] Uploaded image for chat:', currentChat._id);
+          // Fetch all persisted images and update chat messages
+          const images = await fetchAllImages(currentChat._id);
+          const urlPromises = images.map(img => fetchImageById(currentChat._id, img._id));
+          const urls = await Promise.all(urlPromises);
+          setCurrentChat(prev => {
+            if (!prev) return prev;
+            // Attach the most recently uploaded image to the most recent '__image__' message only
+            const msgs = [...prev.messages];
+            for (let i = msgs.length - 1; i >= 0; i--) {
+              if (msgs[i].sender === 'user' && msgs[i].content === '__image__') {
+                // Only update the most recent placeholder
+                msgs[i] = { ...msgs[i], imageUrl: urls[urls.length - 1] };
+                break;
+              }
+            }
+            return { ...prev, messages: msgs };
+          });
         }
       } catch (e) {
         console.error('Failed to upload image:', e);
@@ -214,21 +252,21 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async () => {
-    if (!message.trim() || isLoading) return;
+    const hasImage = Boolean(selectedImage || imagePreviewUrl);
+    if ((!message.trim() && !hasImage) || isLoading) return;
 
     const currentMessage = message;
     setMessage('');
     setIsLoading(true);
 
-    const userMessage = {
+    const userMessage = currentMessage.trim() ? {
       sender: 'user',
       content: currentMessage,
       timestamp: new Date().toISOString(),
-    };
+    } : null;
 
     let activeChat = currentChat;
     let newChatCreated = false;
-    const hasImage = Boolean(selectedImage || imagePreviewUrl);
     const localImageUrl = imagePreviewUrl || null;
     const imagePlaceholderMsg = hasImage
       ? {
@@ -242,11 +280,16 @@ const ChatPage = () => {
     try {
       // If there is no active chat, create one.
       if (!activeChat) {
-        const initialMessages = imagePlaceholderMsg
-          ? [userMessage, imagePlaceholderMsg]
-          : [userMessage];
+        const initialMessages = [];
+        if (userMessage) initialMessages.push(userMessage);
+        if (imagePlaceholderMsg) initialMessages.push(imagePlaceholderMsg);
+        
+        const chatTitle = currentMessage.trim() 
+          ? currentMessage.substring(0, 30) 
+          : 'Image Chat';
+          
         const newChatResponse = await createChat({
-          title: currentMessage.substring(0, 30),
+          title: chatTitle,
           messages: initialMessages,
         });
         activeChat = newChatResponse.data;
@@ -269,15 +312,16 @@ const ChatPage = () => {
         newChatCreated = true;
       } else {
         // If a chat is active, update it with the new user message immediately.
-        const updatedMessages = imagePlaceholderMsg
-          ? [...activeChat.messages, userMessage, imagePlaceholderMsg]
-          : [...activeChat.messages, userMessage];
+        const updatedMessages = [...activeChat.messages];
+        if (userMessage) updatedMessages.push(userMessage);
+        if (imagePlaceholderMsg) updatedMessages.push(imagePlaceholderMsg);
+        
         // Enhance UI with image bubble immediately
         const enhanced = imagePlaceholderMsg && localImageUrl
           ? {
               ...activeChat,
               messages: updatedMessages.map(m =>
-                m.sender === 'user' && m.content === '__image__'
+                m.sender === 'user' && m.content === '__image__' && !m.imageUrl
                   ? { ...m, imageUrl: localImageUrl }
                   : m
               ),
@@ -391,6 +435,7 @@ const ChatPage = () => {
   };
 
   const handleClearChats = async () => {
+    setShowClearChatsModal(false);
     try {
       await Promise.all(chats.map(chat => deleteChat(chat._id)));
       setChats([]);
@@ -400,12 +445,10 @@ const ChatPage = () => {
     }
   };
 
-  const handleThemeToggle = () => {
-    const newTheme = theme === 'dark' ? 'light' : 'dark';
-    setTheme(newTheme);
-  };
+  // Theme toggle is now handled by the ThemeContext
 
   const handleLogout = () => {
+    setShowLogoutModal(false);
     localStorage.removeItem('userInfo');
     navigate('/login');
   };
@@ -417,7 +460,7 @@ const ChatPage = () => {
   };
 
   return (
-    <div className={`${styles.chatContainer} ${theme} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
+    <div className={`${styles.chatContainer} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
       <Sidebar 
         userInfo={userInfo}
         chats={chats}
@@ -425,10 +468,10 @@ const ChatPage = () => {
         handleNewChat={handleNewChat}
         setCurrentChat={setCurrentChat}
         handleDeleteChat={handleDeleteChat}
-        handleClearChats={handleClearChats}
         theme={theme}
-        handleThemeToggle={handleThemeToggle}
-        handleLogout={handleLogout}
+        handleThemeToggle={toggleTheme}
+        onClearChatsClick={() => setShowClearChatsModal(true)}
+        onLogoutClick={() => setShowLogoutModal(true)}
       />
       <ChatArea 
         currentChat={currentChat}
@@ -451,6 +494,28 @@ const ChatPage = () => {
         handleToggleRecording={handleToggleRecording}
         message={message}
         setMessage={setMessage}
+      />
+      {/* Clear Chats Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showClearChatsModal}
+        onClose={() => setShowClearChatsModal(false)}
+        onConfirm={handleClearChats}
+        title="Clear All Chats"
+        message="Are you sure you want to clear all your chat history? This action cannot be undone."
+        confirmText="Clear All"
+        cancelText="Cancel"
+        confirmVariant="danger"
+      />
+      {/* Logout Confirmation Modal */}
+      <ConfirmationModal
+        isOpen={showLogoutModal}
+        onClose={() => setShowLogoutModal(false)}
+        onConfirm={handleLogout}
+        title="Log Out"
+        message="Are you sure you want to log out?"
+        confirmText="Log Out"
+        cancelText="Cancel"
+        confirmVariant="primary"
       />
     </div>
   );

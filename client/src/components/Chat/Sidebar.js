@@ -1,7 +1,6 @@
-import React from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import styles from '../../pages/ChatPage.module.css';
-import { FaPlus, FaTrash, FaSignOutAlt, FaLeaf } from 'react-icons/fa';
-import ThemeToggle from '../ThemeToggle';
+import { FaPlus, FaTrash, FaSignOutAlt, FaLeaf, FaChevronDown, FaSun, FaMoon } from 'react-icons/fa';
 
 const Sidebar = ({
   userInfo,
@@ -10,34 +9,71 @@ const Sidebar = ({
   handleNewChat,
   setCurrentChat,
   handleDeleteChat,
-  handleClearChats,
   theme,
   handleThemeToggle,
-  handleLogout,
+  onClearChatsClick,
+  onLogoutClick,
 }) => {
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  const toggleDropdown = () => {
+    setIsDropdownOpen(!isDropdownOpen);
+  };
+
+  const handleThemeChange = () => {
+    handleThemeToggle();
+    // Don't close the dropdown when toggling theme
+  };
+
+  const handleClearChatsClick = () => {
+    setIsDropdownOpen(false);
+    if (typeof onClearChatsClick === 'function') onClearChatsClick();
+  };
+
+  const handleLogoutClick = () => {
+    setIsDropdownOpen(false);
+    if (typeof onLogoutClick === 'function') onLogoutClick();
+  };
+
+
   return (
     <div className={styles.sidebar}>
       <div className={styles.appHeader}>
         <div className={styles.appLogo}>
           <FaLeaf className={styles.logoIcon} />
         </div>
-        <h1 className={styles.appTitle}>AgriChat</h1>
+        <h1 className={styles.appTitle}>AgroLLM</h1>
       </div>
 
-      {userInfo && (
-        <div className={styles.userSection}>
-          <div className={styles.userName}>{userInfo.name || 'John Farmer'}</div>
-        </div>
-      )}
-
-      <div className={styles.recentChatsSection}>
-        <h2 className={styles.sectionTitle}>Recent Chats</h2>
-        <button className={styles.newChatButton} onClick={handleNewChat}>
-          <FaPlus className={styles.newChatIcon} />
-          New Chat
-        </button>
-      </div>
       <div className={styles.chatHistory}>
+        <div className={styles.chatActions}>
+          <button className={styles.newChatButton} onClick={handleNewChat}>
+            <FaPlus className={styles.newChatIcon} />
+            New Chat
+          </button>
+          <button 
+            className={`${styles.clearChatsButton}`} 
+            onClick={handleClearChatsClick}
+          >
+            <FaTrash />
+            Clear Chats
+          </button>
+        </div>
         {chats.map(chat => (
           <div
             key={chat._id}
@@ -57,17 +93,49 @@ const Sidebar = ({
         ))}
       </div>
 
-      <div className={styles.sidebarOptions}>
-        <button className={`${styles.sidebarButton} ${styles.dangerButton}`} onClick={handleClearChats}>
-          <FaTrash />
-          Clear All Chats
-        </button>
-        <ThemeToggle theme={theme} onToggle={handleThemeToggle} />
-        <button className={styles.sidebarButton} onClick={handleLogout}>
-          <FaSignOutAlt />
-          Logout
-        </button>
+      <div className={styles.sidebarFooter}>
+        <div className={styles.userDropdown} ref={dropdownRef}>
+          <button className={styles.userButton} onClick={toggleDropdown}>
+            <div className={styles.userInitials}>
+              {userInfo?.name?.charAt(0).toUpperCase() || 'U'}
+            </div>
+            <div className={styles.userInfo}>
+              <div className={styles.userName}>{userInfo?.name || 'User'}</div>
+              <div className={styles.userEmail}>{userInfo?.email || ''}</div>
+            </div>
+            <FaChevronDown className={`${styles.dropdownIcon} ${isDropdownOpen ? styles.rotated : ''}`} />
+          </button>
+          
+          {isDropdownOpen && (
+            <div className={styles.dropdownMenu}>
+              <button 
+                className={styles.dropdownItem} 
+                onClick={handleThemeChange}
+              >
+                {theme === 'dark' ? (
+                  <>
+                    <FaSun className={styles.dropdownIcon} />
+                    <span>Light Mode</span>
+                  </>
+                ) : (
+                  <>
+                    <FaMoon className={styles.dropdownIcon} />
+                    <span>Dark Mode</span>
+                  </>
+                )}
+              </button>
+              <button 
+                className={`${styles.dropdownItem} ${styles.logoutButton}`} 
+                onClick={handleLogoutClick}
+              >
+                <FaSignOutAlt className={styles.dropdownIcon} />
+                <span>Log out</span>
+              </button>
+            </div>
+          )}
+        </div>
       </div>
+
     </div>
   );
 };

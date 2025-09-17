@@ -30,45 +30,50 @@ const LoginPage = () => {
   };
 
   return (
-    <div className={styles.authContainer}>
-      <div className={styles.authCard}>
-        <h2 className={styles.title}>Welcome Back!</h2>
-        <p className={styles.subtitle}>Login to continue your AgroLLM journey.</p>
-        <form onSubmit={handleLogin}>
-          <div className={styles.inputGroup}>
-            <MdEmail className={styles.icon} />
-            <input
-              type="email"
-              placeholder="Email Address"
-              className={styles.input}
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-          </div>
-          <div className={styles.inputGroup}>
-            <RiLockPasswordFill className={styles.icon} />
-            <input
-              type="password"
-              placeholder="Password"
-              className={styles.input}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-          </div>
-          <button type="submit" className={styles.button}>
-            Login
+    <div className={styles.splitContainer}>
+      <div className={styles.splitLeft}>
+        <img src="/farm-bg.png" alt="Plant" className={styles.plantImage} />
+      </div>
+      <div className={styles.splitRight}>
+        <div className={styles.authCard}>
+          <h2 className={styles.title}>Welcome back!</h2>
+          <p className={styles.subtitle}>Enter your credentials to access your account</p>
+          <form onSubmit={handleLogin}>
+            <div className={styles.inputGroup}>
+              <MdEmail className={styles.icon} />
+              <input
+                type="email"
+                placeholder="Email address"
+                className={styles.input}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+              />
+            </div>
+            <div className={styles.inputGroup}>
+              <RiLockPasswordFill className={styles.icon} />
+              <input
+                type="password"
+                placeholder="Password"
+                className={styles.input}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+            <button type="submit" className={styles.button}>
+              Login
+            </button>
+          </form>
+          <div className={styles.divider}>OR</div>
+          <button onClick={handleGoogleLogin} className={`${styles.button} ${styles.googleButton}`}>
+            <FaGoogle />
+            <span>Sign in with Google</span>
           </button>
-        </form>
-        <div className={styles.divider}>OR</div>
-        <button onClick={handleGoogleLogin} className={`${styles.button} ${styles.googleButton}`}>
-          <FaGoogle />
-          <span>Login with Google</span>
-        </button>
-        <p className={styles.footerText}>
-          Don't have an account? <Link to="/signup" className={styles.link}>Sign Up</Link>
-        </p>
+          <p className={styles.footerText}>
+            Don't have an account? <Link to="/signup" className={styles.link}>Sign up</Link>
+          </p>
+        </div>
       </div>
     </div>
   );

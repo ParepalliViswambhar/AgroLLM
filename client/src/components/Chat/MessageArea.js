@@ -9,6 +9,84 @@ const MessageArea = ({
   messageAreaRef,
   formatTime,
 }) => {
+  // Function to format AI response content for better readability
+  const formatAIResponse = (content) => {
+    if (!content) return content;
+
+    // Clean up the content first - remove markdown artifacts and clean formatting
+    let cleanContent = content
+      .replace(/\*\*LLM-Classified Agriculture Answer\*\*/g, 'Agriculture Analysis')
+      .replace(/\*\*Agriculture Classification Result\*\*/g, 'Analysis Result')
+      .replace(/\*\*/g, '') // Remove all remaining markdown bold
+      .replace(/\(EN\):/g, '') // Remove language indicators
+      .replace(/\n\n+/g, '\n\n') // Clean up multiple line breaks
+      .trim();
+
+    // Split content into logical sections
+    const sections = cleanContent.split(/(?=\n\n|Management strategies:|Symptoms:|Causes:|Prevention:|Treatment:|In summary|Summary:|Conclusion:)/);
+    
+    return sections.map((section, index) => {
+      const trimmedSection = section.trim();
+      
+      if (trimmedSection.length === 0) return null;
+      
+      // Handle section headers
+      if (trimmedSection.toLowerCase().includes('management strategies') ||
+          trimmedSection.toLowerCase().includes('symptoms') ||
+          trimmedSection.toLowerCase().includes('causes') ||
+          trimmedSection.toLowerCase().includes('prevention') ||
+          trimmedSection.toLowerCase().includes('treatment') ||
+          trimmedSection.toLowerCase().includes('identification') ||
+          trimmedSection.toLowerCase().includes('diagnosis')) {
+        return (
+          <div key={index} className={styles.aiSectionHeader}>
+            {trimmedSection}
+          </div>
+        );
+      }
+      
+      // Handle numbered lists
+      if (/^\d+\./.test(trimmedSection)) {
+        return (
+          <div key={index} className={styles.aiListItem}>
+            {trimmedSection}
+          </div>
+        );
+      }
+      
+      // Handle bullet points
+      if (trimmedSection.startsWith('•') || trimmedSection.startsWith('-')) {
+        return (
+          <div key={index} className={styles.aiListItem}>
+            {trimmedSection}
+          </div>
+        );
+      }
+      
+      // Handle summary/conclusion sections
+      if (trimmedSection.toLowerCase().includes('summary') || 
+          trimmedSection.toLowerCase().includes('conclusion') ||
+          trimmedSection.toLowerCase().includes('in summary')) {
+        return (
+          <div key={index} className={styles.aiSummary}>
+            {trimmedSection}
+          </div>
+        );
+      }
+      
+      // Handle regular paragraphs
+      if (trimmedSection.length > 0) {
+        return (
+          <div key={index} className={styles.aiParagraph}>
+            {trimmedSection}
+          </div>
+        );
+      }
+      
+      return null;
+    }).filter(Boolean); // Remove null entries
+  };
+
   return (
     <div className={styles.messageArea} ref={messageAreaRef}>
       {currentChat === null ? (
@@ -27,6 +105,10 @@ const MessageArea = ({
             <div className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
               {message.imageUrl ? (
                 <img src={message.imageUrl} alt="Attachment" className={styles.imagePreview} />
+              ) : message.sender === 'bot' ? (
+                <div className={styles.aiResponseContent}>
+                  {formatAIResponse(message.content)}
+                </div>
               ) : (
                 message.content
               )}
@@ -48,20 +130,6 @@ const MessageArea = ({
         </div>
       )}
       
-      {isTranscribing && (
-        <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
-          <div className={`${styles.message} ${styles.botMessage} ${styles.processing}`}>
-            <span>Processing audio...</span>
-            <div className={styles.waveContainer}>
-              <div className={styles.wave}></div>
-              <div className={styles.wave}></div>
-              <div className={styles.wave}></div>
-              <div className={styles.wave}></div>
-              <div className={styles.wave}></div>
-            </div>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

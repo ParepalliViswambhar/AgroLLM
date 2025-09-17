@@ -12,6 +12,7 @@ const {
   uploadChatImage,
   getChatImage,
   deleteChatImage,
+  getAllChatImages, 
 } = require('../controllers/chatController');
 const multer = require('multer');
 const path = require('path');
@@ -50,8 +51,11 @@ router.post('/chats/transcribe', protect, upload.single('audio'), transcribeAudi
 
 // Image persistence routes per chat
 router.post('/:id/image', protect, imageUpload.single('image'), uploadChatImage);
-router.get('/:id/image', protect, getChatImage);
-router.delete('/:id/image', protect, deleteChatImage);
+router.get('/:id/image/:imageId', protect, getChatImage); // get image by imageId
+router.get('/:id/image', protect, getChatImage); // fallback: latest image for chat
+router.get('/:id/images', protect, getAllChatImages); // get all image metadata for chat
+router.delete('/:id/image/:imageId', protect, deleteChatImage); // delete by imageId
+router.delete('/:id/image', protect, deleteChatImage); // fallback: delete latest
 
 // Text + image prediction via Gradio /get_answer
 router.post('/get_answer', protect, predictWithImage);

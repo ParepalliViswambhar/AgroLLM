@@ -84,7 +84,7 @@ const isAllowedImageType = (mimetype) => {
   return allowed.includes(mimetype);
 };
 
-// Upload or replace image for a chat
+// Upload a new image for a chat (multiple images supported)
 const uploadChatImage = async (req, res) => {
   try {
     const { id: chatId } = req.params;
@@ -102,39 +102,74 @@ const uploadChatImage = async (req, res) => {
       return res.status(415).json({ message: 'Unsupported image type' });
     }
 
-    await Image.findOneAndUpdate(
-      { chat: chatId },
-      {
-        user: req.user._id,
-        chat: chatId,
-        filename: req.file.originalname,
-        contentType: req.file.mimetype,
-        data: req.file.buffer,
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    res.json({ message: 'Image uploaded' });
+    const result = await Image.create({
+      user: req.user._id,
+      chat: chatId,
+      filename: req.file.originalname,
+      contentType: req.file.mimetype,
+      data: req.file.buffer,
+    });
+    console.log('[UPLOAD IMAGE] For chatId:', chatId, 'User:', req.user._id, 'Result:', !!result);
+    res.json({ message: 'Image uploaded', image: !!result });
   } catch (error) {
     console.error('uploadChatImage error:', error);
     res.status(500).json({ message: 'Server Error', error: error.message });
   }
 };
 
-// Get image binary for a chat
-const getChatImage = async (req, res) => {
+// Get all images for a chat
+const getAllChatImages = async (req, res) => {
   try {
     const { id: chatId } = req.params;
     const chat = await Chat.findById(chatId);
     if (!chat || chat.user.toString() !== req.user._id.toString()) {
       return res.status(404).json({ message: 'Chat not found' });
     }
+    const images = await Image.find({ chat: chatId }).sort({ createdAt: 1 });
+    if (!images || images.length === 0) {
+      return res.status(404).json({ message: 'No images for this chat' });
+    }
+    // Return metadata only (not raw data) for listing
+    const meta = images.map(img => ({
+      _id: img._id,
+      filename: img.filename,
+      contentType: img.contentType,
+      createdAt: img.createdAt,
+      updatedAt: img.updatedAt
+    }));
+    res.json({ images: meta });
+  } catch (error) {
+    console.error('getAllChatImages error:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
+};
 
-    const img = await Image.findOne({ chat: chatId });
+// Get image binary for a chat or by imageId
+const getChatImage = async (req, res) => {
+  try {
+    const { id: chatId, imageId } = req.params;
+    let img;
+    if (imageId) {
+      img = await Image.findById(imageId);
+      if (!img) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+      // Optionally, check user owns the chat
+      const chat = await Chat.findById(img.chat);
+      if (!chat || chat.user.toString() !== req.user._id.toString()) {
+        return res.status(404).json({ message: 'Chat not found' });
+      }
+    } else {
+      const chat = await Chat.findById(chatId);
+      if (!chat || chat.user.toString() !== req.user._id.toString()) {
+        return res.status(404).json({ message: 'Chat not found' });
+      }
+      img = await Image.findOne({ chat: chatId }).sort({ createdAt: -1 }); // latest
+    }
+    console.log('[GET IMAGE] For chatId:', chatId, 'User:', req.user._id, 'Found:', !!img, 'HasData:', !!(img && img.data));
     if (!img || !img.data) {
       return res.status(404).json({ message: 'No image for this chat' });
     }
-
     res.set('Content-Type', img.contentType || 'application/octet-stream');
     res.set('Cache-Control', 'private, max-age=0, must-revalidate');
     return res.send(img.data);
@@ -145,16 +180,30 @@ const getChatImage = async (req, res) => {
 };
 
 // Remove image for a chat
+
 const deleteChatImage = async (req, res) => {
   try {
-    const { id: chatId } = req.params;
+    const { id: chatId, imageId } = req.params;
     const chat = await Chat.findById(chatId);
     if (!chat || chat.user.toString() !== req.user._id.toString()) {
       return res.status(404).json({ message: 'Chat not found' });
     }
 
-    await Image.findOneAndDelete({ chat: chatId });
-    res.json({ message: 'Image removed' });
+    if (imageId) {
+      // Delete specific image by ID
+      const deletedImage = await Image.findOneAndDelete({ 
+        _id: imageId, 
+        chat: chatId 
+      });
+      if (!deletedImage) {
+        return res.status(404).json({ message: 'Image not found' });
+      }
+    } else {
+      // Fallback: delete all images for chat (use carefully)
+      await Image.deleteMany({ chat: chatId });
+    }
+    
+    res.json({ message: 'Image(s) removed' });
   } catch (error) {
     console.error('deleteChatImage error:', error);
     res.status(500).json({ message: 'Server Error', error: error.message });
@@ -314,5 +363,6 @@ module.exports = {
   transcribeAudio,
   uploadChatImage,
   getChatImage,
+  getAllChatImages,
   deleteChatImage,
 };

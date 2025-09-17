@@ -24,9 +24,10 @@ def predict_text_only(question: str):
     try:
         client = get_gradio_client()
         result = client.predict(
-            question=question,
+            transcription=None,
+            text_input_val=question,
             image=None,
-            api_name="/answer_question"
+            api_name="/process_basic_question"
         )
         print(str(result))
     except Exception as e:
@@ -56,10 +57,11 @@ def predict_with_image(question_text: str, chat_id: str):
             temp_path = tmp.name
 
         client = get_gradio_client()
-        result = client.predict(
-            question_text=question_text,
+        result = client.predict( 
+            transcription=None,
+            text_input_val=question,
             image=handle_file(temp_path),
-            api_name="/get_answer"
+            api_name="/process_basic_question"
         )
         print(str(result))
 

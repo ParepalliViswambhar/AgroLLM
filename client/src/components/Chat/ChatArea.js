@@ -1,10 +1,12 @@
-import React from 'react';
+  import React from 'react';
 import styles from '../../pages/ChatPage.module.css';
 import { FaRobot } from 'react-icons/fa';
 import MessageArea from './MessageArea';
 import InputArea from './InputArea';
 
 const ChatArea = (props) => {
+  const { isTranscribing, ...messageAreaProps } = props;
+  
   return (
     <div className={styles.chatArea}>
       <div className={styles.chatHeader}>
@@ -12,8 +14,14 @@ const ChatArea = (props) => {
         <h2 className={styles.chatHeaderTitle}>AgriChat Assistant</h2>
       </div>
 
-      <MessageArea {...props} />
-      <InputArea {...props} />
+      <MessageArea 
+        {...messageAreaProps} 
+        isTranscribing={isTranscribing} 
+      />
+      <InputArea 
+        {...messageAreaProps} 
+        isTranscribing={isTranscribing} 
+      />
     </div>
   );
 };
