@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle, FaUser } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { RiLockPasswordFill } from 'react-icons/ri';
+import { BsEye, BsEyeSlash } from 'react-icons/bs';
 import { signUp } from '../services/api';
 import styles from './Auth.module.css';
 
@@ -10,6 +11,7 @@ const SignupPage = () => {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
   const handleSignup = (e) => {
@@ -65,13 +67,23 @@ const SignupPage = () => {
             <div className={styles.inputGroup}>
               <RiLockPasswordFill className={styles.icon} />
               <input
-                type="password"
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className={styles.input}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
               />
+              <span
+                className={styles.eyeIcon}
+                onClick={() => setShowPassword((prev) => !prev)}
+                style={{ position: 'absolute', right: '0.75rem', cursor: 'pointer', zIndex: 2 }}
+                tabIndex={0}
+                aria-label={showPassword ? 'Hide password' : 'Show password'}
+                role="button"
+              >
+                {showPassword ? <BsEyeSlash size={20} /> : <BsEye size={20} /> }
+              </span>
             </div>
             <button type="submit" className={styles.button}>
               Sign up

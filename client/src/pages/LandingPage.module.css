@@ -46,8 +46,8 @@
   --bg-card: #1e293b;
   
   --text-primary: #f8fafc;
-  --text-secondary: #cbd5e1;
-  --text-tertiary: #94a3b8;
+  --text-secondary: #b6c2d1;
+  --text-tertiary: #7b8a9a;
   
   --border-color: #334155;
   --border-light: #475569;
@@ -100,7 +100,7 @@
   text-align: center;
   padding: 5rem 2rem;
   background: var(--gradient-hero);
-  color: white;
+  color: var(--text-primary);
   border-radius: var(--radius-2xl);
   margin: 3rem auto;
   max-width: 1000px;
@@ -133,6 +133,7 @@
 }
 
 .heroSection p {
+  color: #fff;
   font-size: 1.25rem;
   line-height: 1.6;
   margin-bottom: 2rem;
@@ -284,6 +285,7 @@
   color: var(--text-secondary);
   line-height: 1.6;
   font-size: 1rem;
+  font-weight: 400;
 }
 
 /* Footer */
@@ -294,6 +296,7 @@
   color: var(--text-secondary);
   margin-top: 4rem;
   border-top: 1px solid var(--border-color);
+  font-size: 1.1rem;
 }
 
 /* Responsive Design */
