@@ -21,6 +21,7 @@ const InputArea = ({
   setMessage,
   isLoading,
   isTranscribing,
+  isImageUploadDisabled, // disables image upload if true
 }) => {
   return (
     <div className={styles.inputArea}>
@@ -72,7 +73,7 @@ const InputArea = ({
                   <IoMusicalNotesOutline />
                   <span>Audio</span>
                 </button>
-                <button onClick={() => { imageFileInputRef.current.click(); setIsAttachmentMenuOpen(false); }}>
+                <button onClick={() => { imageFileInputRef.current.click(); setIsAttachmentMenuOpen(false); }} disabled={isImageUploadDisabled}>
                   <IoImageOutline />
                   <span>Image</span>
                 </button>

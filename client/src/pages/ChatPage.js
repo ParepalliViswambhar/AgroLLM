@@ -459,6 +459,15 @@ const ChatPage = () => {
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
+  // Check if current chat already has an image (from persisted images or preview)
+  const isImageUploadDisabled = (() => {
+    if (imagePreviewUrl || selectedImage) return true; // image selected but not uploaded yet
+    if (currentChat && currentChat.messages) {
+      return currentChat.messages.some(m => m.sender === 'user' && m.content === '__image__' && m.imageUrl);
+    }
+    return false;
+  })();
+
   return (
     <div className={`${styles.chatContainer} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
       <Sidebar 
@@ -494,6 +503,7 @@ const ChatPage = () => {
         handleToggleRecording={handleToggleRecording}
         message={message}
         setMessage={setMessage}
+        isImageUploadDisabled={isImageUploadDisabled}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal

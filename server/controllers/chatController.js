@@ -109,6 +109,11 @@ const uploadChatImage = async (req, res) => {
       return res.status(415).json({ message: 'Unsupported image type' });
     }
 
+    // Restrict to only 1 image per chat
+    const existingImage = await Image.findOne({ chat: chatId });
+    if (existingImage) {
+      return res.status(400).json({ message: 'Only one image is allowed per chat.' });
+    }
     const result = await Image.create({
       user: req.user._id,
       chat: chatId,
