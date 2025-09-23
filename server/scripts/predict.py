@@ -20,13 +20,14 @@ def get_gradio_client():
     return Client(gradio_url, verbose=False)
 
 
-def predict_text_only(question: str):
+def predict_text_only(question: str, session_id: str):
     try:
         client = get_gradio_client()
         result = client.predict(
             transcription=None,
             text_input_val=question,
             image=None,
+            session_id=session_id,
             api_name="/process_basic_question"
         )
         print(str(result))
@@ -34,7 +35,7 @@ def predict_text_only(question: str):
         error_and_exit(f"An error occurred: {e}")
 
 
-def predict_with_image(question_text: str, chat_id: str):
+def predict_with_image(question_text: str, chat_id: str, session_id: str):
     mongo_uri = os.environ.get("MONGO_URI")
     if not mongo_uri:
         error_and_exit("Error: MONGO_URI environment variable not set.")
@@ -59,8 +60,9 @@ def predict_with_image(question_text: str, chat_id: str):
         client = get_gradio_client()
         result = client.predict( 
             transcription=None,
-            text_input_val=question,
+            text_input_val=question_text,
             image=handle_file(temp_path),
+            session_id=session_id,
             api_name="/process_basic_question"
         )
         print(str(result))
@@ -73,16 +75,17 @@ def predict_with_image(question_text: str, chat_id: str):
 
 
 if __name__ == "__main__":
-    if len(sys.argv) < 2:
-        error_and_exit("Usage: predict.py <question> | predict.py get_answer <question_text> <chatId>")
+    if len(sys.argv) < 3:
+        error_and_exit("Usage: predict.py <question> <session_id> | predict.py get_answer <question_text> <chatId> <session_id>")
 
     # Mode 1: text+image
     if sys.argv[1] == "get_answer":
-        if len(sys.argv) < 4:
-            error_and_exit("Usage: predict.py get_answer <question_text> <chatId>")
-        _, _, question_text, chat_id = sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3]
-        predict_with_image(question_text, chat_id)
+        if len(sys.argv) < 5:
+            error_and_exit("Usage: predict.py get_answer <question_text> <chatId> <session_id>")
+        _, _, question_text, chat_id, session_id = sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+        predict_with_image(question_text, chat_id, session_id)
     else:
-        # Mode 2: text-only (backward compatible)
+        # Mode 2: text-only
         question = sys.argv[1]
-        predict_text_only(question)
+        session_id = sys.argv[2]
+        predict_text_only(question, session_id)

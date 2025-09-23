@@ -357,13 +357,13 @@ const ChatPage = () => {
           console.error('Image-based prediction failed:', err);
           if (err?.response?.status === 404 || (err.message && err.message.includes('No persisted image'))) {
             console.warn('Falling back to text-only prediction.');
-            botResponse = await predict(currentMessage);
+            botResponse = await predict(currentMessage, activeChat._id);
           } else {
             throw err;
           }
         }
       } else {
-        botResponse = await predict(currentMessage);
+        botResponse = await predict(currentMessage, activeChat._id);
       }
       const botMessage = {
         sender: 'bot',

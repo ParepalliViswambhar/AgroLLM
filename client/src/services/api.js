@@ -17,7 +17,7 @@ export const createChat = (chatData) => API.post('/chats', chatData);
 export const deleteChat = (id) => API.delete(`/chats/${id}`);
 export const updateChat = (id, data) => API.put(`/chats/${id}`, data);
 export const clearChats = () => API.delete('/chats/clear');
-export const predict = (question) => API.post('/chats/predict', { question });
+export const predict = (question, chatId) => API.post('/chats/predict', { question, chatId });
 
 // Image-enabled prediction
 export const getAnswer = (question_text, chatId) =>

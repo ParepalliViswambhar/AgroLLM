@@ -25,6 +25,7 @@
     "mongoose": "^8.17.0",
     "multer": "^2.0.2",
     "passport": "^0.7.0",
-    "passport-google-oauth20": "^2.0.0"
+    "passport-google-oauth20": "^2.0.0",
+    "uuidv4": "^6.2.13"
   }
 }

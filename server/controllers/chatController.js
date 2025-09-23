@@ -3,6 +3,7 @@ const Image = require('../models/imageModel');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
+const { v4: uuidv4 } = require('uuid');
 
 const getChats = async (req, res) => {
   const chats = await Chat.find({ user: req.user._id });
@@ -30,7 +31,13 @@ const predictWithImage = async (req, res) => {
       return res.status(404).json({ message: 'No persisted image found for this chat.' });
     }
 
-    const pythonProcess = spawn('python', ['./scripts/predict.py', 'get_answer', question_text, chatId], {
+    const chatDoc = await Chat.findById(chatId);
+    if (!chatDoc) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+    const sessionId = chatDoc.sessionId;
+
+    const pythonProcess = spawn('python', ['./scripts/predict.py', 'get_answer', question_text, chatId, sessionId], {
       env: {
         ...process.env,
         PYTHONIOENCODING: 'utf-8',
@@ -213,8 +220,11 @@ const deleteChatImage = async (req, res) => {
 const createChat = async (req, res) => {
   const { messages } = req.body;
 
+  const sessionId = uuidv4();
+
   const chat = new Chat({
     user: req.user._id,
+    sessionId,
     messages,
   });
 
@@ -242,10 +252,19 @@ const clearChats = async (req, res) => {
   res.json({ message: 'All chats removed' });
 };
 
-const predict = (req, res) => {
-  const { question } = req.body;
+const predict = async (req, res) => {
+  const { question, chatId } = req.body;
+  if (!question || !chatId) {
+    return res.status(400).json({ message: 'Missing required fields: question, chatId' });
+  }
 
-  const pythonProcess = spawn('python', ['./scripts/predict.py', question], {
+  const chat = await Chat.findById(chatId);
+  if (!chat || chat.user.toString() !== req.user._id.toString()) {
+    return res.status(404).json({ message: 'Chat not found' });
+  }
+
+  const sessionId = chat.sessionId;
+  const pythonProcess = spawn('python', ['./scripts/predict.py', question, sessionId], {
     env: {
       ...process.env,
       PYTHONIOENCODING: 'utf-8',
