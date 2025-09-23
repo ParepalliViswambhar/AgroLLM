@@ -3,6 +3,7 @@ import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle } from 'react-icons/io5';
 
+import { useEffect, useRef } from 'react';
 const InputArea = ({
   imagePreviewUrl,
   handleClearAttachment,
@@ -23,6 +24,20 @@ const InputArea = ({
   isTranscribing,
   isImageUploadDisabled, // disables image upload if true
 }) => {
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!isAttachmentMenuOpen) return;
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setIsAttachmentMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isAttachmentMenuOpen, setIsAttachmentMenuOpen]);
+
   return (
     <div className={styles.inputArea}>
       {imagePreviewUrl && (
@@ -60,7 +75,7 @@ const InputArea = ({
             ref={imageFileInputRef}
           />
           
-          <div className={styles.attachmentContainer}>
+          <div className={styles.attachmentContainer} ref={menuRef}>
             <button
               type="button"
               className={`${styles.iconButton} ${styles.clipButton}`}
@@ -68,7 +83,7 @@ const InputArea = ({
               <FaPaperclip />
             </button>
             {isAttachmentMenuOpen && (
-              <div className={styles.attachmentMenu}>
+              <div className={styles.attachmentMenu} >
                 <button onClick={() => { audioFileInputRef.current.click(); setIsAttachmentMenuOpen(false); }}>
                   <IoMusicalNotesOutline />
                   <span>Audio</span>

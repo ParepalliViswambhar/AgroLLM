@@ -121,7 +121,6 @@ const uploadChatImage = async (req, res) => {
       contentType: req.file.mimetype,
       data: req.file.buffer,
     });
-    console.log('[UPLOAD IMAGE] For chatId:', chatId, 'User:', req.user._id, 'Result:', !!result);
     res.json({ message: 'Image uploaded', image: !!result });
   } catch (error) {
     console.error('uploadChatImage error:', error);
