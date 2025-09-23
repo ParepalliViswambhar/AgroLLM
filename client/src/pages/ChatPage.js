@@ -214,40 +214,12 @@ const ChatPage = () => {
     if (file) {
       setSelectedImage(file);
       setSelectedFile(null);
-      // Keep message for question_text input; do not force clear
       if (imagePreviewUrl) {
         URL.revokeObjectURL(imagePreviewUrl);
       }
       const previewUrl = URL.createObjectURL(file);
       setImagePreviewUrl(previewUrl);
-      console.log('[FRONTEND] Selected image file:', file, 'Preview URL:', previewUrl);
-      // If chat exists, upload immediately to persist across sessions
-      try {
-        if (currentChat && currentChat._id) {
-          await uploadChatImageSvc(currentChat._id, file);
-          console.log('[FRONTEND] Uploaded image for chat:', currentChat._id);
-          // Fetch all persisted images and update chat messages
-          const images = await fetchAllImages(currentChat._id);
-          const urlPromises = images.map(img => fetchImageById(currentChat._id, img._id));
-          const urls = await Promise.all(urlPromises);
-          setCurrentChat(prev => {
-            if (!prev) return prev;
-            // Attach the most recently uploaded image to the most recent '__image__' message only
-            const msgs = [...prev.messages];
-            for (let i = msgs.length - 1; i >= 0; i--) {
-              if (msgs[i].sender === 'user' && msgs[i].content === '__image__') {
-                // Only update the most recent placeholder
-                msgs[i] = { ...msgs[i], imageUrl: urls[urls.length - 1] };
-                break;
-              }
-            }
-            return { ...prev, messages: msgs };
-          });
-        }
-      } catch (e) {
-        console.error('Failed to upload image:', e);
-        alert('Failed to upload image. Please try another file.');
-      }
+      // Only show local preview for now; upload and backend fetch will be handled in handleSendMessage
     }
   };
 
@@ -331,11 +303,18 @@ const ChatPage = () => {
       }
       // If a new image is selected and not yet persisted (no chat before), upload now
       let botResponse;
+      let persistedUrl = null;
       if (hasImage && activeChat && activeChat._id) {
         try {
           if (selectedImage) {
             await uploadChatImageSvc(activeChat._id, selectedImage);
-            const persistedUrl = await fetchChatImage(activeChat._id);
+            // Don't fetch persisted image yet; do it after bot answer
+          }
+
+          botResponse = await getAnswer(currentMessage, activeChat._id);
+          // Now fetch persisted image URL and update chat UI
+          if (selectedImage) {
+            persistedUrl = await fetchChatImage(activeChat._id);
             if (persistedUrl) {
               setCurrentChat(prev => {
                 if (!prev) return prev;
@@ -351,8 +330,6 @@ const ChatPage = () => {
               replacedWithPersisted = true;
             }
           }
-
-          botResponse = await getAnswer(currentMessage, activeChat._id);
         } catch (err) {
           console.error('Image-based prediction failed:', err);
           if (err?.response?.status === 404 || (err.message && err.message.includes('No persisted image'))) {
@@ -383,18 +360,39 @@ const ChatPage = () => {
       // Update the chat on the server.
       const finalChatResponse = await updateChat(activeChat._id, { messages: finalMessages });
 
-      // Update the UI with the final, complete state.
-      const enhancedFinal = imagePlaceholderMsg && localImageUrl
-        ? {
+      // After the chat is updated, fetch all images and match to __image__ placeholders
+      let enhancedFinal = finalChatResponse.data;
+      try {
+        if (imagePlaceholderMsg && activeChat && activeChat._id) {
+          const images = await fetchAllImages(activeChat._id);
+          const urlPromises = images.map(img => fetchImageById(activeChat._id, img._id));
+          const urls = await Promise.all(urlPromises);
+          let imageIdx = 0;
+          enhancedFinal = {
+            ...finalChatResponse.data,
+            messages: finalChatResponse.data.messages.map(m => {
+              if (m.sender === 'user' && m.content === '__image__' && urls[imageIdx]) {
+                const msgWithUrl = { ...m, imageUrl: urls[imageIdx] };
+                imageIdx++;
+                return msgWithUrl;
+              }
+              return m;
+            })
+          };
+        }
+      } catch (e) {
+        // fallback: use local preview if available
+        if (imagePlaceholderMsg && localImageUrl) {
+          enhancedFinal = {
             ...finalChatResponse.data,
             messages: finalChatResponse.data.messages.map(m =>
               m.sender === 'user' && m.content === '__image__'
                 ? { ...m, imageUrl: localImageUrl }
                 : m
             ),
-          }
-        : finalChatResponse.data;
-
+          };
+        }
+      }
       setCurrentChat(enhancedFinal);
       setChats(prevChats => prevChats.map(c => (c._id === enhancedFinal._id ? enhancedFinal : c)));
     } catch (error) {

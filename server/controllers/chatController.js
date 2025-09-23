@@ -178,7 +178,7 @@ const getChatImage = async (req, res) => {
       }
       img = await Image.findOne({ chat: chatId }).sort({ createdAt: -1 }); // latest
     }
-    console.log('[GET IMAGE] For chatId:', chatId, 'User:', req.user._id, 'Found:', !!img, 'HasData:', !!(img && img.data));
+    
     if (!img || !img.data) {
       return res.status(404).json({ message: 'No image for this chat' });
     }
