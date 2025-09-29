@@ -225,7 +225,8 @@ const ChatPage = () => {
 
   const handleSendMessage = async () => {
     const hasImage = Boolean(selectedImage || imagePreviewUrl);
-    if ((!message.trim() && !hasImage) || isLoading) return;
+    // Only allow sending if there is non-empty message text
+    if (!message.trim() || isLoading) return;
 
     const currentMessage = message;
     setMessage('');
@@ -363,7 +364,8 @@ const ChatPage = () => {
       // After the chat is updated, fetch all images and match to __image__ placeholders
       let enhancedFinal = finalChatResponse.data;
       try {
-        if (imagePlaceholderMsg && activeChat && activeChat._id) {
+        // Always try to match all __image__ placeholders to fetched URLs
+        if (activeChat && activeChat._id) {
           const images = await fetchAllImages(activeChat._id);
           const urlPromises = images.map(img => fetchImageById(activeChat._id, img._id));
           const urls = await Promise.all(urlPromises);
@@ -407,8 +409,11 @@ const ChatPage = () => {
       if (imagePreviewUrl && replacedWithPersisted) {
         try { URL.revokeObjectURL(imagePreviewUrl); } catch {}
       }
-      setImagePreviewUrl(null);
-      setSelectedImage(null);
+      // Only clear preview if there is no image in the new message
+      if (!selectedImage && !imagePreviewUrl) {
+        setImagePreviewUrl(null);
+        setSelectedImage(null);
+      }
     }
   };
 

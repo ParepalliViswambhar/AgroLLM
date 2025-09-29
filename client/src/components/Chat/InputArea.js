@@ -129,8 +129,8 @@ const InputArea = ({
           
           <button
             type="submit"
-            className={`${styles.sendButton} ${(message.trim() || imagePreviewUrl) ? styles.active : ''}`}
-            disabled={isLoading || (!message.trim() && !imagePreviewUrl)}>
+            className={`${styles.sendButton} ${message.trim() ? styles.active : ''}`}
+            disabled={isLoading || !message.trim()}>
             <FaPaperPlane />
           </button>
         </form>

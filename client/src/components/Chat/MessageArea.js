@@ -100,22 +100,101 @@ const MessageArea = ({
           </p>
         </div>
       ) : (
-        currentChat.messages.map((message, index) => (
-          <div key={index} className={`${styles.messageWrapper} ${message.sender === 'user' ? styles.userMessageWrapper : styles.botMessageWrapper}`}>
-            <div className={`${styles.message} ${message.sender === 'user' ? styles.userMessage : styles.botMessage}`}>
-              {message.imageUrl ? (
-                <img src={message.imageUrl} alt="Attachment" className={styles.imagePreview} />
-              ) : message.sender === 'bot' ? (
-                <div className={styles.aiResponseContent}>
-                  {formatAIResponse(message.content)}
+        // Group user image + text messages together
+        (() => {
+          const grouped = [];
+          const msgs = currentChat.messages;
+          for (let i = 0; i < msgs.length; i++) {
+            const m = msgs[i];
+            // If this is a user text message and next is a user image message, group them
+            if (
+              m.sender === 'user' && m.content !== '__image__' &&
+              msgs[i + 1] && msgs[i + 1].sender === 'user' && msgs[i + 1].content === '__image__' && msgs[i + 1].imageUrl
+            ) {
+              grouped.push({
+                type: 'user-text-image',
+                text: m.content,
+                imageUrl: msgs[i + 1].imageUrl,
+                timestamp: msgs[i + 1].timestamp,
+              });
+              i++; // skip the next message since it's grouped
+            }
+            // If this is a user image message and next is a user text message, group them
+            else if (
+              m.sender === 'user' && m.content === '__image__' && m.imageUrl &&
+              msgs[i + 1] && msgs[i + 1].sender === 'user' && msgs[i + 1].content !== '__image__'
+            ) {
+              grouped.push({
+                type: 'user-image-text',
+                imageUrl: m.imageUrl,
+                text: msgs[i + 1].content,
+                timestamp: msgs[i + 1].timestamp,
+              });
+              i++; // skip the next message since it's grouped
+            } else if (m.sender === 'user' && m.content === '__image__' && m.imageUrl) {
+              grouped.push({
+                type: 'user-image',
+                imageUrl: m.imageUrl,
+                timestamp: m.timestamp,
+              });
+            } else if (m.sender === 'user' && m.content !== '__image__') {
+              // Only user text
+              grouped.push({
+                type: 'user-text',
+                text: m.content,
+                timestamp: m.timestamp,
+              });
+            } else if (m.sender === 'bot') {
+              grouped.push({
+                type: 'bot',
+                text: m.content,
+                timestamp: m.timestamp,
+              });
+            }
+          }
+          console.log('DEBUG: original messages', msgs);
+          console.log('DEBUG: grouped array', grouped);
+          return grouped.map((item, idx) => {
+            if (item.type === 'user-image-text' || item.type === 'user-text-image') {
+              return (
+                <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
+                  <div className={`${styles.message} ${styles.userMessage}`}>
+                    <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
+                    <div style={{marginTop: '0.75rem'}}>{item.text}</div>
+                  </div>
+                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
                 </div>
-              ) : (
-                message.content
-              )}
-            </div>
-            <div className={styles.messageTimestamp}>{formatTime(message.timestamp)}</div>
-          </div>
-        ))
+              );
+            } else if (item.type === 'user-image') {
+              return (
+                <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
+                  <div className={`${styles.message} ${styles.userMessage}`}>
+                    <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
+                  </div>
+                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+                </div>
+              );
+            } else if (item.type === 'user-text') {
+              return (
+                <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
+                  <div className={`${styles.message} ${styles.userMessage}`}>{item.text}</div>
+                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+                </div>
+              );
+            } else if (item.type === 'bot') {
+              return (
+                <div key={idx} className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
+                  <div className={`${styles.message} ${styles.botMessage}`}>
+                    <div className={styles.aiResponseContent}>{formatAIResponse(item.text)}</div>
+                  </div>
+                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+                </div>
+              );
+            } else {
+              return null;
+            }
+          });
+        })()
       )}
       
       {isLoading && !isTranscribing && !isRecording && (

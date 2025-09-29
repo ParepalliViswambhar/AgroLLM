@@ -906,7 +906,7 @@
 .imagePreviewContainer {
   margin: 0 1rem 1rem;
   position: relative;
-  max-width: 200px;
+  max-width: 250px;
   border-radius: var(--radius-lg);
   overflow: hidden;
   box-shadow: var(--shadow-md);
@@ -915,8 +915,8 @@
 }
 
 .imagePreview {
-  width: 350px;
-  height: 350px;
+  width: 250px;
+  height: 250px;
   object-fit: contain;
   background: #181c20;
   display: block;
