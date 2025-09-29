@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle } from 'react-icons/io5';
@@ -25,6 +25,40 @@ const InputArea = ({
   isImageUploadDisabled, // disables image upload if true
 }) => {
   const menuRef = useRef(null);
+  const [isDragActive, setIsDragActive] = useState(false);
+
+  // Drag and drop handlers
+  const handleDragOver = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setIsDragActive(false);
+    if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+      const file = e.dataTransfer.files[0];
+      if (file && file.type.startsWith('image/')) {
+        // Create a synthetic event to reuse handleImageFileChange
+        const syntheticEvent = { target: { files: [file] } };
+        handleImageFileChange(syntheticEvent);
+      } else if (file && file.type.startsWith('audio/')) {
+        // Create a synthetic event to reuse handleAudioFileChange
+        const syntheticEvent = { target: { files: [file] } };
+        handleAudioFileChange(syntheticEvent);
+      }
+      e.dataTransfer.clearData();
+    }
+  };
+
   useEffect(() => {
     if (!isAttachmentMenuOpen) return;
     const handleClickOutside = (event) => {
@@ -39,7 +73,12 @@ const InputArea = ({
   }, [isAttachmentMenuOpen, setIsAttachmentMenuOpen]);
 
   return (
-    <div className={styles.inputArea}>
+    <div
+      className={styles.inputArea + (isDragActive ? ' ' + styles.dragActive : '')}
+      onDragOver={handleDragOver}
+      onDrop={handleDrop}
+      onDragLeave={handleDragLeave}
+    >
       {imagePreviewUrl && (
         <div className={styles.imagePreviewContainer}>
           <img src={imagePreviewUrl} alt="Preview" className={styles.imagePreview} />

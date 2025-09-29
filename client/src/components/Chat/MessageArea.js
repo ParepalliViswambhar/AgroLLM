@@ -87,6 +87,274 @@ const MessageArea = ({
     }).filter(Boolean); // Remove null entries
   };
 
+  // Helper component for copy button
+  const CopyButton = ({ content, className = '', style = {} }) => {
+    const [isCopied, setIsCopied] = React.useState(false);
+
+    const handleCopy = async () => {
+      try {
+        await navigator.clipboard.writeText(content);
+        setIsCopied(true);
+        setTimeout(() => {
+          setIsCopied(false);
+        }, 2000);
+      } catch (err) {
+        console.error('Failed to copy text: ', err);
+      }
+    };
+
+    return (
+      <button
+        className={`${styles.copyButton} ${className}`}
+        title={isCopied ? "Copied!" : "Copy"}
+        onClick={handleCopy}
+        style={{ 
+          background: 'none', 
+          border: 'none', 
+          cursor: 'pointer',
+          padding: '8px',
+          borderRadius: '6px',
+          display: 'flex', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          position: 'relative',
+          transform: 'scale(1)',
+          boxShadow: '0 0 0 rgba(0, 0, 0, 0)',
+          ...style 
+        }}
+        onMouseEnter={(e) => {
+          if (!isCopied) {
+            e.target.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+            e.target.style.transform = 'scale(1.1)';
+            e.target.style.boxShadow = '0 4px 12px rgba(59, 130, 246, 0.15)';
+          }
+        }}
+        onMouseLeave={(e) => {
+          e.target.style.backgroundColor = 'transparent';
+          e.target.style.transform = 'scale(1)';
+          e.target.style.boxShadow = '0 0 0 rgba(0, 0, 0, 0)';
+        }}
+        onMouseDown={(e) => {
+          e.target.style.transform = isCopied ? 'scale(1)' : 'scale(0.95)';
+        }}
+        onMouseUp={(e) => {
+          if (!isCopied) {
+            e.target.style.transform = 'scale(1.1)';
+          }
+        }}
+      >
+        {isCopied ? (
+          // Checkmark/tick icon
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2.5" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            style={{ color: '#10b981' }}
+          >
+            <polyline points="20,6 9,17 4,12"></polyline>
+          </svg>
+        ) : (
+          // Copy icon
+          <svg 
+            width="16" 
+            height="16" 
+            viewBox="0 0 24 24" 
+            fill="none" 
+            stroke="currentColor" 
+            strokeWidth="2" 
+            strokeLinecap="round" 
+            strokeLinejoin="round"
+            style={{ color: '#6b7280' }}
+          >
+            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+          </svg>
+        )}
+      </button>
+    );
+  };
+
+  // Function to group messages
+  const groupMessages = (messages) => {
+    const grouped = [];
+    for (let i = 0; i < messages.length; i++) {
+      const m = messages[i];
+      
+      // If this is a user text message and next is a user image message, group them
+      if (
+        m.sender === 'user' && m.content !== '__image__' &&
+        messages[i + 1] && messages[i + 1].sender === 'user' && 
+        messages[i + 1].content === '__image__' && messages[i + 1].imageUrl
+      ) {
+        grouped.push({
+          type: 'user-text-image',
+          text: m.content,
+          imageUrl: messages[i + 1].imageUrl,
+          timestamp: messages[i + 1].timestamp,
+        });
+        i++; // skip the next message since it's grouped
+      }
+      // If this is a user image message and next is a user text message, group them
+      else if (
+        m.sender === 'user' && m.content === '__image__' && m.imageUrl &&
+        messages[i + 1] && messages[i + 1].sender === 'user' && 
+        messages[i + 1].content !== '__image__'
+      ) {
+        grouped.push({
+          type: 'user-image-text',
+          imageUrl: m.imageUrl,
+          text: messages[i + 1].content,
+          timestamp: messages[i + 1].timestamp,
+        });
+        i++; // skip the next message since it's grouped
+      } 
+      else if (m.sender === 'user' && m.content === '__image__' && m.imageUrl) {
+        grouped.push({
+          type: 'user-image',
+          imageUrl: m.imageUrl,
+          timestamp: m.timestamp,
+        });
+      } 
+      else if (m.sender === 'user' && m.content !== '__image__') {
+        grouped.push({
+          type: 'user-text',
+          text: m.content,
+          timestamp: m.timestamp,
+        });
+      } 
+      else if (m.sender === 'bot') {
+        grouped.push({
+          type: 'bot',
+          text: m.content,
+          timestamp: m.timestamp,
+        });
+      }
+    }
+    return grouped;
+  };
+
+  // Function to render grouped messages
+  const renderGroupedMessages = (groupedMessages) => {
+    return groupedMessages.map((item, idx) => {
+      // Determine what content to copy
+      let copyContent = '';
+      if (item.type === 'user-image-text' || item.type === 'user-text-image') {
+        copyContent = item.text; // Only text, not image URL
+      } else if (item.type === 'user-image') {
+        copyContent = item.imageUrl;
+      } else if (item.type === 'user-text') {
+        copyContent = item.text;
+      } else if (item.type === 'bot') {
+        copyContent = item.text;
+      }
+
+      const handleMouseEnter = (e) => {
+        const btn = e.currentTarget.querySelector('.userCopyBtn');
+        if (btn) btn.style.display = 'flex';
+      };
+
+      const handleMouseLeave = (e) => {
+        const btn = e.currentTarget.querySelector('.userCopyBtn');
+        if (btn) btn.style.display = 'none';
+      };
+
+      switch (item.type) {
+        case 'user-image-text':
+        case 'user-text-image':
+          return (
+            <div 
+              key={idx} 
+              className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div className={`${styles.message} ${styles.userMessage}`}>
+                <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
+                <div style={{marginTop: '0.75rem'}}>
+                  {item.text}
+                </div>
+              </div>
+              <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '24px'}}>
+                <span 
+                  className="userCopyBtn" 
+                  style={{
+                    display: 'none',
+                    marginRight: '8px'
+                  }}
+                >
+                  <CopyButton content={copyContent} />
+                </span>
+              </div>
+              <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+            </div>
+          );
+
+        case 'user-image':
+          return (
+            <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
+              <div className={`${styles.message} ${styles.userMessage}`}>
+                <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
+              </div>
+              <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                <CopyButton content={copyContent} />
+              </div>
+              <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+            </div>
+          );
+
+        case 'user-text':
+          return (
+            <div 
+              key={idx} 
+              className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
+            >
+              <div className={`${styles.message} ${styles.userMessage}`}>
+                {item.text}
+              </div>
+              <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '24px'}}>
+                <span 
+                  className="userCopyBtn" 
+                  style={{
+                    display: 'none',
+                    marginRight: '8px'
+                  }}
+                >
+                  <CopyButton content={copyContent} />
+                </span>
+              </div>
+              <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+            </div>
+          );
+
+        case 'bot':
+          return (
+            <div key={idx} className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
+              <div className={`${styles.message} ${styles.botMessage}`}>
+                <div className={styles.aiResponseContent}>
+                  {formatAIResponse(item.text)}
+                </div>
+              </div>
+              <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+                <CopyButton content={copyContent} />
+              </div>
+              <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+            </div>
+          );
+
+        default:
+          return null;
+      }
+    });
+  };
+
   return (
     <div className={styles.messageArea} ref={messageAreaRef}>
       {currentChat === null ? (
@@ -100,101 +368,7 @@ const MessageArea = ({
           </p>
         </div>
       ) : (
-        // Group user image + text messages together
-        (() => {
-          const grouped = [];
-          const msgs = currentChat.messages;
-          for (let i = 0; i < msgs.length; i++) {
-            const m = msgs[i];
-            // If this is a user text message and next is a user image message, group them
-            if (
-              m.sender === 'user' && m.content !== '__image__' &&
-              msgs[i + 1] && msgs[i + 1].sender === 'user' && msgs[i + 1].content === '__image__' && msgs[i + 1].imageUrl
-            ) {
-              grouped.push({
-                type: 'user-text-image',
-                text: m.content,
-                imageUrl: msgs[i + 1].imageUrl,
-                timestamp: msgs[i + 1].timestamp,
-              });
-              i++; // skip the next message since it's grouped
-            }
-            // If this is a user image message and next is a user text message, group them
-            else if (
-              m.sender === 'user' && m.content === '__image__' && m.imageUrl &&
-              msgs[i + 1] && msgs[i + 1].sender === 'user' && msgs[i + 1].content !== '__image__'
-            ) {
-              grouped.push({
-                type: 'user-image-text',
-                imageUrl: m.imageUrl,
-                text: msgs[i + 1].content,
-                timestamp: msgs[i + 1].timestamp,
-              });
-              i++; // skip the next message since it's grouped
-            } else if (m.sender === 'user' && m.content === '__image__' && m.imageUrl) {
-              grouped.push({
-                type: 'user-image',
-                imageUrl: m.imageUrl,
-                timestamp: m.timestamp,
-              });
-            } else if (m.sender === 'user' && m.content !== '__image__') {
-              // Only user text
-              grouped.push({
-                type: 'user-text',
-                text: m.content,
-                timestamp: m.timestamp,
-              });
-            } else if (m.sender === 'bot') {
-              grouped.push({
-                type: 'bot',
-                text: m.content,
-                timestamp: m.timestamp,
-              });
-            }
-          }
-          console.log('DEBUG: original messages', msgs);
-          console.log('DEBUG: grouped array', grouped);
-          return grouped.map((item, idx) => {
-            if (item.type === 'user-image-text' || item.type === 'user-text-image') {
-              return (
-                <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
-                  <div className={`${styles.message} ${styles.userMessage}`}>
-                    <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
-                    <div style={{marginTop: '0.75rem'}}>{item.text}</div>
-                  </div>
-                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
-                </div>
-              );
-            } else if (item.type === 'user-image') {
-              return (
-                <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
-                  <div className={`${styles.message} ${styles.userMessage}`}>
-                    <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
-                  </div>
-                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
-                </div>
-              );
-            } else if (item.type === 'user-text') {
-              return (
-                <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
-                  <div className={`${styles.message} ${styles.userMessage}`}>{item.text}</div>
-                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
-                </div>
-              );
-            } else if (item.type === 'bot') {
-              return (
-                <div key={idx} className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
-                  <div className={`${styles.message} ${styles.botMessage}`}>
-                    <div className={styles.aiResponseContent}>{formatAIResponse(item.text)}</div>
-                  </div>
-                  <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
-                </div>
-              );
-            } else {
-              return null;
-            }
-          });
-        })()
+        renderGroupedMessages(groupMessages(currentChat.messages))
       )}
       
       {isLoading && !isTranscribing && !isRecording && (
@@ -208,7 +382,6 @@ const MessageArea = ({
           </div>
         </div>
       )}
-      
     </div>
   );
 };
