@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
+import { toast, ToastContainer } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle } from 'react-icons/io5';
-
-import { useEffect, useRef } from 'react';
 const InputArea = ({
   imagePreviewUrl,
   handleClearAttachment,
@@ -23,11 +23,61 @@ const InputArea = ({
   isLoading,
   isTranscribing,
   isImageUploadDisabled, // disables image upload if true
+  userImageCount,
+  maxImagesPerChat,
 }) => {
   const menuRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const inputRef = useRef(null);
 
-  // Drag and drop handlers
+  // Toast after send button
+  const showImageToast = () => {
+    if (typeof userImageCount === 'number' && typeof maxImagesPerChat === 'number') {
+      // Subtract 1 for the image being sent now (if an image is attached)
+      const left = maxImagesPerChat - userImageCount - (imagePreviewUrl ? 1 : 0);
+      // Show on all sends where at least 1 image slot remains after this send
+      if (left >= 1) {
+        toast(
+          <div style={{
+            color: '#fff',
+            background: 'linear-gradient(90deg, #1f8a4c 0%, #17633b 100%)',
+            borderRadius: '8px',
+            padding: '12px 20px',
+            fontWeight: 600,
+            fontSize: '1rem',
+            boxShadow: '0 2px 12px rgba(31,138,76,0.15)'
+          }}>
+            <span style={{marginRight: 8}}>🖼️</span>
+            {left} image{left === 1 ? '' : 's'} left this chat
+          </div>,
+          {
+            autoClose: 2500,
+            hideProgressBar: false,
+            closeOnClick: true,
+            pauseOnHover: true,
+            draggable: true,
+            position: 'bottom-center',
+            style: { background: 'transparent', boxShadow: 'none' },
+            bodyStyle: { padding: 0, margin: 0 }
+          }
+        );
+      }
+    }
+  };
+
+  // Show toast when a new image is selected
+  useEffect(() => {
+    if (imagePreviewUrl) {
+      showImageToast();
+    }
+    // Only run when imagePreviewUrl changes
+  }, [imagePreviewUrl]);
+
+  const onSendClick = async (e) => {
+    e.preventDefault();
+    showImageToast();
+    await handleSendMessage();
+  };
   const handleDragOver = (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -73,8 +123,9 @@ const InputArea = ({
   }, [isAttachmentMenuOpen, setIsAttachmentMenuOpen]);
 
   return (
-    <div
-      className={styles.inputArea + (isDragActive ? ' ' + styles.dragActive : '')}
+    <>
+      <div
+        className={styles.inputArea + (isDragActive ? ' ' + styles.dragActive : '')}
       onDragOver={handleDragOver}
       onDrop={handleDrop}
       onDragLeave={handleDragLeave}
@@ -95,7 +146,7 @@ const InputArea = ({
       )}
       <div className={styles.inputContainer}>
         <form
-          onSubmit={(e) => { e.preventDefault(); handleSendMessage(); }}
+          onSubmit={onSendClick}
           className={styles.inputForm}>
           <input
             type="file"
@@ -157,24 +208,26 @@ const InputArea = ({
             </div>
           ) : (
             <input
-              type="text"
-              className={styles.inputField}
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              placeholder="Ask me anything about agriculture..."
-              disabled={isLoading}
-            />
+            type="text"
+            className={styles.inputField}
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Ask me anything about agriculture..."
+            disabled={isLoading}
+            ref={inputRef}
+          />
           )}
           
           <button
             type="submit"
             className={`${styles.sendButton} ${message.trim() ? styles.active : ''}`}
-            disabled={isLoading || !message.trim()}>
+          >
             <FaPaperPlane />
           </button>
         </form>
       </div>
     </div>
+    </>
   );
 };
 

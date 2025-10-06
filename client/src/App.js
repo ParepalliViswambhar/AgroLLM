@@ -1,4 +1,5 @@
 import React from 'react';
+import { ToastContainer } from 'react-toastify';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LandingPage from './pages/LandingPage';
@@ -11,6 +12,7 @@ import './App.css';
 function App() {
   return (
     <ThemeProvider>
+      <ToastContainer position="bottom-center" style={{ zIndex: 99999 }} />
       <Router>
         <Routes>
           <Route path="/" element={<LandingPage />} />

@@ -59,10 +59,7 @@ const ChatPage = () => {
   useEffect(() => {
     const loadPersistedImages = async () => {
       if (currentChat && currentChat._id) {
-        if (imagePreviewUrl) {
-          URL.revokeObjectURL(imagePreviewUrl);
-        }
-        
+        // Do not revoke the local preview here; it may still be in use by UI until send completes
         try {
           const images = await fetchAllImages(currentChat._id);
           const urlPromises = images.map(img => fetchImageById(currentChat._id, img._id));
@@ -89,9 +86,7 @@ const ChatPage = () => {
         setImagePreviewUrl(null);
         setSelectedImage(null);
       } else {
-        if (imagePreviewUrl) {
-          URL.revokeObjectURL(imagePreviewUrl);
-        }
+        // Do not revoke here either; cleanup happens on unmount or after successful replacement
         setImagePreviewUrl(null);
         setSelectedImage(null);
       }
@@ -224,12 +219,21 @@ const ChatPage = () => {
   };
 
   const handleSendMessage = async () => {
-    const hasImage = Boolean(selectedImage || imagePreviewUrl);
+    // Snapshot attachment state BEFORE clearing, so UI can show immediately
+    const localImageUrl = imagePreviewUrl || null;
+    const localSelectedImage = selectedImage || null;
+    const hasImage = Boolean(localSelectedImage || localImageUrl);
+
+    // Always clear input and image preview after any send attempt
+    setMessage('');
+    setImagePreviewUrl(null);
+    setSelectedFile(null);
+    setSelectedImage(null);
+
     // Only allow sending if there is non-empty message text
     if (!message.trim() || isLoading) return;
 
     const currentMessage = message;
-    setMessage('');
     setIsLoading(true);
 
     const userMessage = currentMessage.trim() ? {
@@ -240,7 +244,6 @@ const ChatPage = () => {
 
     let activeChat = currentChat;
     let newChatCreated = false;
-    const localImageUrl = imagePreviewUrl || null;
     const imagePlaceholderMsg = hasImage
       ? {
           sender: 'user',
@@ -307,14 +310,14 @@ const ChatPage = () => {
       let persistedUrl = null;
       if (hasImage && activeChat && activeChat._id) {
         try {
-          if (selectedImage) {
-            await uploadChatImageSvc(activeChat._id, selectedImage);
+          if (localSelectedImage) {
+            await uploadChatImageSvc(activeChat._id, localSelectedImage);
             // Don't fetch persisted image yet; do it after bot answer
           }
 
           botResponse = await getAnswer(currentMessage, activeChat._id);
           // Now fetch persisted image URL and update chat UI
-          if (selectedImage) {
+          if (localSelectedImage) {
             persistedUrl = await fetchChatImage(activeChat._id);
             if (persistedUrl) {
               setCurrentChat(prev => {
@@ -333,7 +336,12 @@ const ChatPage = () => {
           }
         } catch (err) {
           console.error('Image-based prediction failed:', err);
-          if (err?.response?.status === 404 || (err.message && err.message.includes('No persisted image'))) {
+          if (err?.response) {
+            console.error('Backend error response:', err.response.data);
+            console.error('Backend error status:', err.response.status);
+            console.error('Backend error headers:', err.response.headers);
+          }
+        if (err?.response?.status === 404 || (err.message && err.message.includes('No persisted image'))) {
             console.warn('Falling back to text-only prediction.');
             botResponse = await predict(currentMessage, activeChat._id);
           } else {
@@ -406,13 +414,15 @@ const ChatPage = () => {
       setSelectedFile(null);
       // Clear local image preview to simulate moving it to the chat bubble
       // Revoke only if we replaced with persisted blob to avoid breaking the chat bubble
-      if (imagePreviewUrl && replacedWithPersisted) {
-        try { URL.revokeObjectURL(imagePreviewUrl); } catch {}
+      if (localImageUrl && replacedWithPersisted) {
+        try { URL.revokeObjectURL(localImageUrl); } catch {}
       }
-      // Only clear preview if there is no image in the new message
-      if (!selectedImage && !imagePreviewUrl) {
-        setImagePreviewUrl(null);
-        setSelectedImage(null);
+      // Always clear image preview and selected image after send
+      setImagePreviewUrl(null);
+      setSelectedImage(null);
+      // Reset image file input to allow re-uploading same file
+      if (imageFileInputRef && imageFileInputRef.current) {
+        imageFileInputRef.current.value = null;
       }
     }
   };
@@ -456,18 +466,23 @@ const ChatPage = () => {
     navigate('/login');
   };
 
+  // Format time for chat messages
   const formatTime = (dateString) => {
     if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', hour12: true });
   };
 
-  // Check if current chat already has an image (from persisted images or preview)
+  // Allow up to 4 images per chat session
+  const getUserImageCount = () => {
+    if (!currentChat || !currentChat.messages) return 0;
+    return currentChat.messages.filter(m => m.sender === 'user' && m.content === '__image__' && m.imageUrl).length;
+  };
+  const maxImagesPerChat = 4;
+  const userImageCount = getUserImageCount();
   const isImageUploadDisabled = (() => {
     if (imagePreviewUrl || selectedImage) return true; // image selected but not uploaded yet
-    if (currentChat && currentChat.messages) {
-      return currentChat.messages.some(m => m.sender === 'user' && m.content === '__image__' && m.imageUrl);
-    }
+    if (userImageCount >= maxImagesPerChat) return true;
     return false;
   })();
 
@@ -507,6 +522,8 @@ const ChatPage = () => {
         message={message}
         setMessage={setMessage}
         isImageUploadDisabled={isImageUploadDisabled}
+        userImageCount={userImageCount}
+        maxImagesPerChat={maxImagesPerChat}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal

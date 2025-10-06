@@ -48,7 +48,7 @@ def predict_with_image(question_text: str, chat_id: str, session_id: str):
             db_name = os.environ.get("MONGO_DB_NAME", "test")
             db = mclient[db_name]
         images = db.get_collection("images")
-        doc = images.find_one({"chat": ObjectId(chat_id)})
+        doc = images.find_one({"chat": ObjectId(chat_id)}, sort=[('_id', -1)])
         if not doc or not doc.get("data"):
             error_and_exit("No persisted image found for this chat.")
 

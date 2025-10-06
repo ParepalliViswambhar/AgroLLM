@@ -117,7 +117,7 @@ const MessageArea = ({
           display: 'flex', 
           alignItems: 'center',
           justifyContent: 'center',
-          transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'all 0.1s cubic-bezier(0.4, 0, 0.2, 1)',
           position: 'relative',
           transform: 'scale(1)',
           boxShadow: '0 0 0 rgba(0, 0, 0, 0)',
@@ -342,7 +342,8 @@ const MessageArea = ({
                   {formatAIResponse(item.text)}
                 </div>
               </div>
-              <div style={{display: 'flex', justifyContent: 'flex-end'}}>
+              <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '24px', gap: '4px'}}>
+                <SpeakerButton answer={item.text} />
                 <CopyButton content={copyContent} />
               </div>
               <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
@@ -383,6 +384,73 @@ const MessageArea = ({
         </div>
       )}
     </div>
+  );
+};
+
+// Speaker button for reading bot answers aloud
+const SpeakerButton = ({ answer }) => {
+  const [isSpeaking, setIsSpeaking] = React.useState(false);
+  const [hovered, setHovered] = React.useState(false);
+  const synthRef = React.useRef(window.speechSynthesis);
+  const utterRef = React.useRef(null);
+
+  const handleSpeak = () => {
+    if (isSpeaking) {
+      synthRef.current.cancel();
+      setIsSpeaking(false);
+      return;
+    }
+    if (!answer) return;
+    const utter = new window.SpeechSynthesisUtterance(answer);
+    utter.rate = 1;
+    utter.pitch = 1;
+    utter.volume = 1;
+    utter.onend = () => setIsSpeaking(false);
+    utter.onerror = () => setIsSpeaking(false);
+    utterRef.current = utter;
+    setIsSpeaking(true);
+    synthRef.current.speak(utter);
+  };
+
+  React.useEffect(() => {
+    return () => {
+      if (isSpeaking) synthRef.current.cancel();
+    };
+  }, [isSpeaking]);
+
+  return (
+    <button
+      className={styles.copyButton}
+      title={isSpeaking ? 'Stop speaking' : 'Read answer'}
+      aria-label="Read answer"
+      onClick={handleSpeak}
+      style={{
+        background: hovered ? 'rgba(16, 185, 129, 0.12)' : 'none',
+        border: 'none',
+        cursor: 'pointer',
+        padding: '8px',
+        borderRadius: '6px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        transition: 'all 0.1s cubic-bezier(0.4, 0, 0.2, 1)',
+        position: 'relative',
+        transform: hovered ? 'scale(1.1)' : 'scale(1)',
+        boxShadow: hovered ? '0 4px 12px rgba(16, 185, 129, 0.12)' : '0 0 0 rgba(0,0,0,0)',
+        marginRight: '8px',
+      }}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      onMouseDown={e => e.target.style.transform = 'scale(0.95)'}
+      onMouseUp={e => e.target.style.transform = 'scale(1.1)'}
+    >
+      {/* Speaker icon */}
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" style={{ color: isSpeaking ? '#10b981' : '#6b7280' }}>
+        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+        <path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path>
+        <path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+      </svg>
+    </button>
   );
 };
 
