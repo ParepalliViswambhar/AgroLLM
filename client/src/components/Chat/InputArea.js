@@ -1,6 +1,4 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { toast, ToastContainer } from 'react-toastify';
-import 'react-toastify/dist/ReactToastify.css';
 import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle } from 'react-icons/io5';
@@ -28,54 +26,13 @@ const InputArea = ({
 }) => {
   const menuRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
+  const [showImageTooltip, setShowImageTooltip] = useState(false);
   const inputRef = useRef(null);
 
-  // Toast after send button
-  const showImageToast = () => {
-    if (typeof userImageCount === 'number' && typeof maxImagesPerChat === 'number') {
-      // Subtract 1 for the image being sent now (if an image is attached)
-      const left = maxImagesPerChat - userImageCount - (imagePreviewUrl ? 1 : 0);
-      // Show on all sends where at least 1 image slot remains after this send
-      if (left >= 1) {
-        toast(
-          <div style={{
-            color: '#fff',
-            background: 'linear-gradient(90deg, #1f8a4c 0%, #17633b 100%)',
-            borderRadius: '8px',
-            padding: '12px 20px',
-            fontWeight: 600,
-            fontSize: '1rem',
-            boxShadow: '0 2px 12px rgba(31,138,76,0.15)'
-          }}>
-            <span style={{marginRight: 8}}>🖼️</span>
-            {left} image{left === 1 ? '' : 's'} left this chat
-          </div>,
-          {
-            autoClose: 2500,
-            hideProgressBar: false,
-            closeOnClick: true,
-            pauseOnHover: true,
-            draggable: true,
-            position: 'bottom-center',
-            style: { background: 'transparent', boxShadow: 'none' },
-            bodyStyle: { padding: 0, margin: 0 }
-          }
-        );
-      }
-    }
-  };
-
-  // Show toast when a new image is selected
-  useEffect(() => {
-    if (imagePreviewUrl) {
-      showImageToast();
-    }
-    // Only run when imagePreviewUrl changes
-  }, [imagePreviewUrl]);
-
+  
+  
   const onSendClick = async (e) => {
     e.preventDefault();
-    showImageToast();
     await handleSendMessage();
   };
   const handleDragOver = (e) => {
@@ -178,10 +135,41 @@ const InputArea = ({
                   <IoMusicalNotesOutline />
                   <span>Audio</span>
                 </button>
-                <button onClick={() => { imageFileInputRef.current.click(); setIsAttachmentMenuOpen(false); }} disabled={isImageUploadDisabled}>
-                  <IoImageOutline />
-                  <span>Image</span>
-                </button>
+                <div
+  style={{ position: 'relative', display: 'inline-block' }}
+  onMouseEnter={() => setShowImageTooltip(true)}
+  onMouseLeave={() => setShowImageTooltip(false)}
+  onFocus={() => setShowImageTooltip(true)}
+  onBlur={() => setShowImageTooltip(false)}
+>
+  <button
+    onClick={() => { imageFileInputRef.current.click(); setIsAttachmentMenuOpen(false); }}
+    disabled={isImageUploadDisabled}
+    style={isImageUploadDisabled ? { cursor: 'not-allowed' } : {}}
+  >
+    <IoImageOutline />
+    <span>Image</span>
+  </button>
+  {showImageTooltip && (
+    <div style={{
+      position: 'absolute',
+      left: '100%',
+      top: '50%',
+      transform: 'translateY(-50%)',
+      background: '#222',
+      color: '#fff',
+      padding: '6px 14px',
+      borderRadius: '8px',
+      fontSize: '0.93rem',
+      whiteSpace: 'nowrap',
+      marginLeft: '10px',
+      zIndex: 9999,
+      boxShadow: '0 2px 8px rgba(0,0,0,0.15)'
+    }}>
+      {Math.max(0, maxImagesPerChat - userImageCount)} image{Math.max(0, maxImagesPerChat - userImageCount) === 1 ? '' : 's'} left
+    </div>
+  )}
+</div>
               </div>
             )}
           </div>

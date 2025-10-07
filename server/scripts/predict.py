@@ -33,8 +33,19 @@ def predict_text_only(question: str, session_id: str):
         print(str(result))
     except Exception as e:
         error_and_exit(f"An error occurred: {e}")
-
-
+def predict_text_only_expert(question: str, session_id: str):
+    try:
+        client = get_gradio_client()
+        result = client.predict(
+            transcription=None,
+            text_input_val=question,
+            image=None,
+            session_id=session_id,
+            api_name="/process_expert_question"
+        )
+        print(str(result))
+    except Exception as e:
+        error_and_exit(f"An error occurred: {e}")
 def predict_with_image(question_text: str, chat_id: str, session_id: str):
     mongo_uri = os.environ.get("MONGO_URI")
     if not mongo_uri:
@@ -72,7 +83,43 @@ def predict_with_image(question_text: str, chat_id: str, session_id: str):
     finally:
         if temp_path and os.path.exists(temp_path):
             os.remove(temp_path)
+def predict_with_image_expert(question_text: str, chat_id: str, session_id: str):
+    mongo_uri = os.environ.get("MONGO_URI")
+    if not mongo_uri:
+        error_and_exit("Error: MONGO_URI environment variable not set.")
 
+    temp_path = None
+    try:
+        mclient = MongoClient(mongo_uri)
+        db = mclient.get_default_database()
+        if db is None:
+            db_name = os.environ.get("MONGO_DB_NAME", "test")
+            db = mclient[db_name]
+        images = db.get_collection("images")
+        doc = images.find_one({"chat": ObjectId(chat_id)}, sort=[('_id', -1)])
+        if not doc or not doc.get("data"):
+            error_and_exit("No persisted image found for this chat.")
+
+        # Save image to a temporary file
+        with tempfile.NamedTemporaryFile(delete=False, suffix=".jpg") as tmp:
+            tmp.write(doc["data"])
+            temp_path = tmp.name
+
+        client = get_gradio_client()
+        result = client.predict( 
+            transcription=None,
+            text_input_val=question_text,
+            image=handle_file(temp_path),
+            session_id=session_id,
+            api_name="/process_expert_question"
+        )
+        print(str(result))
+
+    except Exception as e:
+        error_and_exit(f"An error occurred: {e}")
+    finally:
+        if temp_path and os.path.exists(temp_path):
+            os.remove(temp_path)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
