@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
-import { RiLockPasswordFill } from 'react-icons/ri';
+import { RiLockPasswordFill } from 'react-icons/ri'; 
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
 import { login } from '../services/api';
 import styles from './Auth.module.css';
