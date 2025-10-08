@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom';
 import { FaGoogle, FaUser } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
