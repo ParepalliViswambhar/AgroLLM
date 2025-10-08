@@ -27,7 +27,7 @@ const LoginPage = () => {
   };
 
   const handleGoogleLogin = () => {
-  const backendURL = project.env.REACT_APP_API_URL || 'http://localhost:5000';
+  const backendURL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
   window.location.href = `${backendURL}/api/auth/google`;
 };
 
