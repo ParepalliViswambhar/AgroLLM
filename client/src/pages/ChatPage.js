@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio, getAnswer } from '../services/api';
+import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio, getAnswer, predictExpert, predictExpertWithImage, getExpertAnalysisStatus } from '../services/api';
 import { uploadImage as uploadChatImageSvc, removeImage as removeChatImageSvc, fetchImage as fetchChatImage, fetchAllImages, fetchImageById } from '../services/imageChatHandler';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChatPage.module.css';
@@ -34,6 +34,9 @@ const ChatPage = () => {
   // Modal states moved from Sidebar
   const [showClearChatsModal, setShowClearChatsModal] = useState(false);
   const [showLogoutModal, setShowLogoutModal] = useState(false);
+  
+  // Expert Analysis state
+  const [expertAnalysisRemaining, setExpertAnalysisRemaining] = useState(2);
 
 
   useEffect(() => {
@@ -44,6 +47,7 @@ const ChatPage = () => {
       const parsedUserInfo = JSON.parse(storedUserInfo);
       setUserInfo(parsedUserInfo);
       fetchChats();
+      fetchExpertAnalysisStatus();
       setCurrentChat(null);
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -117,6 +121,15 @@ const ChatPage = () => {
       setChats(reversedChats);
     } catch (error) {
       console.error('Failed to fetch chats:', error);
+    }
+  };
+
+  const fetchExpertAnalysisStatus = async () => {
+    try {
+      const response = await getExpertAnalysisStatus();
+      setExpertAnalysisRemaining(response.data.remaining);
+    } catch (error) {
+      console.error('Failed to fetch expert analysis status:', error);
     }
   };
 
@@ -218,6 +231,17 @@ const ChatPage = () => {
     }
   };
 
+  const handleExpertClick = () => {
+    setMessage('@expert ');
+    // Focus the input field after inserting @expert
+    setTimeout(() => {
+      const inputField = document.querySelector(`.${styles.inputField}`);
+      if (inputField) {
+        inputField.focus();
+      }
+    }, 0);
+  };
+
   const handleSendMessage = async () => {
     // Snapshot attachment state BEFORE clearing, so UI can show immediately
     const localImageUrl = imagePreviewUrl || null;
@@ -234,11 +258,37 @@ const ChatPage = () => {
     if (!message.trim() || isLoading) return;
 
     const currentMessage = message;
+    
+    // Check if this is an expert analysis request
+    const isExpertMode = currentMessage.trim().startsWith('@expert');
+    const actualQuestion = isExpertMode 
+      ? currentMessage.trim().substring(7).trim() // Remove '@expert' prefix
+      : currentMessage;
+    
+    // Don't proceed if expert mode but no actual question
+    if (isExpertMode && !actualQuestion) {
+      setMessage(currentMessage); // Restore the message
+      return;
+    }
+    
+    // Check expert analysis limit before sending
+    if (isExpertMode && expertAnalysisRemaining <= 0) {
+      alert('Daily expert analysis limit reached. You can use this feature 2 times per day.');
+      setMessage(currentMessage); // Restore the message
+      return;
+    }
+    
+    // Decrement immediately when sending expert analysis
+    if (isExpertMode) {
+      setExpertAnalysisRemaining(prev => Math.max(0, prev - 1));
+    }
+    
     setIsLoading(true);
 
-    const userMessage = currentMessage.trim() ? {
+    // Store only the actual question without @expert prefix
+    const userMessage = actualQuestion.trim() ? {
       sender: 'user',
-      content: currentMessage,
+      content: actualQuestion,
       timestamp: new Date().toISOString(),
     } : null;
 
@@ -260,8 +310,8 @@ const ChatPage = () => {
         if (userMessage) initialMessages.push(userMessage);
         if (imagePlaceholderMsg) initialMessages.push(imagePlaceholderMsg);
         
-        const chatTitle = currentMessage.trim() 
-          ? currentMessage.substring(0, 30) 
+        const chatTitle = actualQuestion.trim() 
+          ? actualQuestion.substring(0, 30) 
           : 'Image Chat';
           
         const newChatResponse = await createChat({
@@ -315,7 +365,13 @@ const ChatPage = () => {
             // Don't fetch persisted image yet; do it after bot answer
           }
 
-          botResponse = await getAnswer(currentMessage, activeChat._id);
+          // Use expert endpoint if in expert mode
+          if (isExpertMode) {
+            botResponse = await predictExpertWithImage(actualQuestion, activeChat._id);
+          } else {
+            botResponse = await getAnswer(currentMessage, activeChat._id);
+          }
+          
           // Now fetch persisted image URL and update chat UI
           if (localSelectedImage) {
             persistedUrl = await fetchChatImage(activeChat._id);
@@ -343,13 +399,32 @@ const ChatPage = () => {
           }
         if (err?.response?.status === 404 || (err.message && err.message.includes('No persisted image'))) {
             console.warn('Falling back to text-only prediction.');
-            botResponse = await predict(currentMessage, activeChat._id);
+            // Use expert endpoint if in expert mode
+            if (isExpertMode) {
+              botResponse = await predictExpert(actualQuestion, activeChat._id);
+            } else {
+              botResponse = await predict(currentMessage, activeChat._id);
+            }
+          } else if (err?.response?.status === 429) {
+            // Expert analysis limit reached - restore count since request failed
+            if (isExpertMode) {
+              setExpertAnalysisRemaining(prev => prev + 1);
+            }
+            alert(err.response.data.message || 'Daily expert analysis limit reached.');
+            setIsLoading(false);
+            setMessage(currentMessage); // Restore message
+            return;
           } else {
             throw err;
           }
         }
       } else {
-        botResponse = await predict(currentMessage, activeChat._id);
+        // Use expert endpoint if in expert mode
+        if (isExpertMode) {
+          botResponse = await predictExpert(actualQuestion, activeChat._id);
+        } else {
+          botResponse = await predict(currentMessage, activeChat._id);
+        }
       }
       const botMessage = {
         sender: 'bot',
@@ -407,6 +482,10 @@ const ChatPage = () => {
       setChats(prevChats => prevChats.map(c => (c._id === enhancedFinal._id ? enhancedFinal : c)));
     } catch (error) {
       console.error('Error during message sending:', error);
+      // Restore expert analysis count if request failed
+      if (isExpertMode) {
+        setExpertAnalysisRemaining(prev => prev + 1);
+      }
       // In case of an error, revert to a consistent state.
       fetchChats();
     } finally {
@@ -524,6 +603,8 @@ const ChatPage = () => {
         isImageUploadDisabled={isImageUploadDisabled}
         userImageCount={userImageCount}
         maxImagesPerChat={maxImagesPerChat}
+        onExpertClick={handleExpertClick}
+        expertAnalysisRemaining={expertAnalysisRemaining}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal

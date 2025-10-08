@@ -8,6 +8,9 @@ const {
   clearChats,
   predict,
   predictWithImage,
+  predictExpert,
+  predictExpertWithImage,
+  getExpertAnalysisStatus,
   transcribeAudio,
   uploadChatImage,
   getChatImage,
@@ -59,5 +62,10 @@ router.delete('/:id/image', protect, deleteChatImage); // fallback: delete lates
 
 // Text + image prediction via Gradio /get_answer
 router.post('/get_answer', protect, predictWithImage);
+
+// Expert Analysis endpoints
+router.post('/predict_expert', protect, predictExpert);
+router.post('/predict_expert_image', protect, predictExpertWithImage);
+router.get('/expert_analysis_status', protect, getExpertAnalysisStatus);
 
 module.exports = router;

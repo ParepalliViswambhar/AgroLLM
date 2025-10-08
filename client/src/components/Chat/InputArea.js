@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
-import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle } from 'react-icons/io5';
+import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle, IoTelescopeOutline } from 'react-icons/io5';
 const InputArea = ({
   imagePreviewUrl,
   handleClearAttachment,
@@ -23,10 +23,13 @@ const InputArea = ({
   isImageUploadDisabled, // disables image upload if true
   userImageCount,
   maxImagesPerChat,
+  onExpertClick, // new prop for expert analysis
+  expertAnalysisRemaining, // remaining expert analysis count
 }) => {
   const menuRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
   const [showImageTooltip, setShowImageTooltip] = useState(false);
+  const [showExpertTooltip, setShowExpertTooltip] = useState(false);
   const inputRef = useRef(null);
 
   
@@ -174,6 +177,28 @@ const InputArea = ({
             )}
           </div>
 
+          <div 
+            style={{ position: 'relative', display: 'inline-block' }}
+            onMouseEnter={() => setShowExpertTooltip(true)}
+            onMouseLeave={() => setShowExpertTooltip(false)}
+          >
+            <button
+              type="button"
+              className={`${styles.iconButton} ${styles.expertButton} ${expertAnalysisRemaining === 0 ? styles.expertButtonDisabled : ''}`}
+              onClick={onExpertClick}
+              disabled={expertAnalysisRemaining === 0}>
+              <IoTelescopeOutline />
+            </button>
+            {showExpertTooltip && (
+              <div className={styles.expertTooltip}>
+                Deep Research
+                <span className={styles.expertTooltipCount}>
+                  {expertAnalysisRemaining} {expertAnalysisRemaining === 1 ? 'left' : 'left'} today
+                </span>
+              </div>
+            )}
+          </div>
+
           <button
             type="button"
             className={`${styles.iconButton} ${styles.micButton} ${
@@ -195,15 +220,38 @@ const InputArea = ({
               </div>
             </div>
           ) : (
-            <input
-            type="text"
-            className={styles.inputField}
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            placeholder="Ask me anything about agriculture..."
-            disabled={isLoading}
-            ref={inputRef}
-          />
+            <div className={styles.inputFieldWrapper}>
+              {message.trim().startsWith('@expert') && (
+                <span className={styles.expertBadge}>
+                  <IoTelescopeOutline style={{ marginRight: '0.25rem', fontSize: '0.9rem' }} />
+                  Deep Research
+                  <button
+                    type="button"
+                    className={styles.expertBadgeClose}
+                    onClick={() => setMessage(message.substring(7).trim())}
+                    title="Exit Deep Research mode"
+                  >
+                    <IoCloseCircle />
+                  </button>
+                </span>
+              )}
+              <input
+                type="text"
+                className={styles.inputField}
+                value={message.trim().startsWith('@expert') ? message.substring(8) : message}
+                onChange={(e) => {
+                  const newValue = e.target.value;
+                  if (message.trim().startsWith('@expert')) {
+                    setMessage('@expert ' + newValue);
+                  } else {
+                    setMessage(newValue);
+                  }
+                }}
+                placeholder="Ask me anything about agriculture..."
+                disabled={isLoading}
+                ref={inputRef}
+              />
+            </div>
           )}
           
           <button

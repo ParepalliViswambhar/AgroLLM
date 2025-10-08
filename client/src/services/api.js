@@ -23,6 +23,12 @@ export const predict = (question, chatId) => API.post('/chats/predict', { questi
 export const getAnswer = (question_text, chatId) =>
   API.post('/chats/get_answer', { question_text, chatId });
 
+// Expert Analysis endpoints
+export const predictExpert = (question, chatId) => API.post('/chats/predict_expert', { question, chatId });
+export const predictExpertWithImage = (question_text, chatId) =>
+  API.post('/chats/predict_expert_image', { question_text, chatId });
+export const getExpertAnalysisStatus = () => API.get('/chats/expert_analysis_status');
+
 // Image persistence endpoints
 export const uploadChatImage = (chatId, file) => {
   const formData = new FormData();

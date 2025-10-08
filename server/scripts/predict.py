@@ -123,7 +123,7 @@ def predict_with_image_expert(question_text: str, chat_id: str, session_id: str)
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
-        error_and_exit("Usage: predict.py <question> <session_id> | predict.py get_answer <question_text> <chatId> <session_id>")
+        error_and_exit("Usage: predict.py <question> <session_id> | predict.py get_answer <question_text> <chatId> <session_id> | predict.py expert_text <question> <session_id> | predict.py expert_image <question_text> <chatId> <session_id>")
 
     # Mode 1: text+image
     if sys.argv[1] == "get_answer":
@@ -131,6 +131,18 @@ if __name__ == "__main__":
             error_and_exit("Usage: predict.py get_answer <question_text> <chatId> <session_id>")
         _, _, question_text, chat_id, session_id = sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
         predict_with_image(question_text, chat_id, session_id)
+    # Mode 3: expert text-only
+    elif sys.argv[1] == "expert_text":
+        if len(sys.argv) < 4:
+            error_and_exit("Usage: predict.py expert_text <question> <session_id>")
+        _, _, question, session_id = sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3]
+        predict_text_only_expert(question, session_id)
+    # Mode 4: expert text+image
+    elif sys.argv[1] == "expert_image":
+        if len(sys.argv) < 5:
+            error_and_exit("Usage: predict.py expert_image <question_text> <chatId> <session_id>")
+        _, _, question_text, chat_id, session_id = sys.argv[0], sys.argv[1], sys.argv[2], sys.argv[3], sys.argv[4]
+        predict_with_image_expert(question_text, chat_id, session_id)
     else:
         # Mode 2: text-only
         question = sys.argv[1]

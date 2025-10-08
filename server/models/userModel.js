@@ -7,6 +7,8 @@ const userSchema = mongoose.Schema(
     googleId: { type: String },
     email: { type: String, unique: true, required: true },
     password: { type: String },
+    expertAnalysisCount: { type: Number, default: 0 },
+    expertAnalysisResetDate: { type: Date, default: Date.now },
   },
   { timestamps: true }
 );

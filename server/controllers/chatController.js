@@ -1,13 +1,53 @@
 const Chat = require('../models/chatModel');
 const Image = require('../models/imageModel');
+const User = require('../models/userModel');
 const { spawn } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
+// Helper function to check if user needs reset and get remaining count
+const checkExpertAnalysisLimit = async (userId) => {
+  const user = await User.findById(userId);
+  if (!user) return { allowed: false, remaining: 0 };
+
+  const now = new Date();
+  const resetDate = new Date(user.expertAnalysisResetDate);
+  
+  // Check if 24 hours have passed since last reset
+  const hoursSinceReset = (now - resetDate) / (1000 * 60 * 60);
+  
+  if (hoursSinceReset >= 24) {
+    // Reset the count
+    user.expertAnalysisCount = 0;
+    user.expertAnalysisResetDate = now;
+    await user.save();
+  }
+
+  const remaining = Math.max(0, 2 - user.expertAnalysisCount);
+  return { allowed: remaining > 0, remaining, user };
+};
+
+// Increment expert analysis count
+const incrementExpertAnalysisCount = async (user) => {
+  user.expertAnalysisCount += 1;
+  await user.save();
+};
+
 const getChats = async (req, res) => {
   const chats = await Chat.find({ user: req.user._id });
   res.json(chats);
+};
+
+// Get expert analysis remaining count
+const getExpertAnalysisStatus = async (req, res) => {
+  try {
+    const { allowed, remaining } = await checkExpertAnalysisLimit(req.user._id);
+    res.json({ remaining, allowed });
+  } catch (error) {
+    console.error('getExpertAnalysisStatus error:', error);
+    res.status(500).json({ message: 'Server Error', error: error.message });
+  }
 };
 
 // Predict using text + image via Gradio /get_answer
@@ -310,6 +350,180 @@ const predict = async (req, res) => {
   });
 };
 
+// Expert Analysis: Text-only prediction
+const predictExpert = async (req, res) => {
+  try {
+    const { question, chatId } = req.body;
+    
+    if (!question || !chatId) {
+      return res.status(400).json({ message: 'Missing required fields: question, chatId' });
+    }
+
+    // Check expert analysis limit
+    const { allowed, remaining, user } = await checkExpertAnalysisLimit(req.user._id);
+    if (!allowed) {
+      return res.status(429).json({ 
+        message: 'Daily expert analysis limit reached. You can use this feature 2 times per day.',
+        remaining: 0
+      });
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat || chat.user.toString() !== req.user._id.toString()) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    const sessionId = chat.sessionId;
+    
+    // Console log for debugging
+    console.log('=== EXPERT ANALYSIS REQUEST ===');
+    console.log('Question:', question);
+    console.log('Session ID:', sessionId);
+    console.log('Chat ID:', chatId);
+    console.log('================================');
+
+    const pythonProcess = spawn('python', ['./scripts/predict.py', 'expert_text', question, sessionId], {
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: 'utf-8',
+        GRADIO_URL: process.env.GRADIO_URL,
+      },
+    });
+
+    let result = '';
+    let error = '';
+    let responseSent = false;
+
+    pythonProcess.stdout.on('data', (data) => {
+      result += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      error += data.toString();
+      console.error(`stderr: ${data}`);
+    });
+
+    pythonProcess.on('close', async (code) => {
+      if (responseSent) return;
+      responseSent = true;
+
+      if (code !== 0) {
+        return res.status(500).json({ message: 'Expert prediction script failed', error });
+      }
+      if (error) {
+        return res.status(500).json({ message: 'Error from expert prediction script', error });
+      }
+      
+      // Increment usage count on successful prediction
+      await incrementExpertAnalysisCount(user);
+      const newRemaining = remaining - 1;
+      
+      res.json({ answer: result.trim(), expertAnalysisRemaining: newRemaining });
+    });
+
+    pythonProcess.on('error', (err) => {
+      if (responseSent) return;
+      responseSent = true;
+      console.error(`Failed to start subprocess: ${err}`);
+      res.status(500).json({ message: 'Failed to start expert prediction script' });
+    });
+  } catch (err) {
+    console.error('predictExpert error:', err);
+    res.status(500).json({ message: 'Server Error', error: err.message });
+  }
+};
+
+// Expert Analysis: Prediction with image
+const predictExpertWithImage = async (req, res) => {
+  try {
+    const { question_text, chatId } = req.body;
+
+    if (!question_text || !chatId) {
+      return res.status(400).json({ message: 'Missing required fields: question_text, chatId' });
+    }
+
+    // Check expert analysis limit
+    const { allowed, remaining, user } = await checkExpertAnalysisLimit(req.user._id);
+    if (!allowed) {
+      return res.status(429).json({ 
+        message: 'Daily expert analysis limit reached. You can use this feature 2 times per day.',
+        remaining: 0
+      });
+    }
+
+    const chat = await Chat.findById(chatId);
+    if (!chat || chat.user.toString() !== req.user._id.toString()) {
+      return res.status(404).json({ message: 'Chat not found' });
+    }
+
+    // Pre-check: if no image persisted for this chat, skip Python call
+    const hasImage = await Image.exists({ chat: chatId });
+    if (!hasImage) {
+      return res.status(404).json({ message: 'No persisted image found for this chat.' });
+    }
+
+    const sessionId = chat.sessionId;
+    
+    // Console log for debugging
+    console.log('=== EXPERT ANALYSIS WITH IMAGE REQUEST ===');
+    console.log('Question:', question_text);
+    console.log('Session ID:', sessionId);
+    console.log('Chat ID:', chatId);
+    console.log('===========================================');
+
+    const pythonProcess = spawn('python', ['./scripts/predict.py', 'expert_image', question_text, chatId, sessionId], {
+      env: {
+        ...process.env,
+        PYTHONIOENCODING: 'utf-8',
+        GRADIO_URL: process.env.GRADIO_URL,
+        MONGO_URI: process.env.MONGO_URI,
+      },
+    });
+
+    let result = '';
+    let error = '';
+    let responseSent = false;
+
+    pythonProcess.stdout.on('data', (data) => {
+      result += data.toString();
+    });
+
+    pythonProcess.stderr.on('data', (data) => {
+      error += data.toString();
+      console.error(`stderr: ${data}`);
+    });
+
+    pythonProcess.on('close', async (code) => {
+      if (responseSent) return;
+      responseSent = true;
+
+      const lowerErr = (error || '').toLowerCase();
+      if (code !== 0 || error) {
+        if (lowerErr.includes('no persisted image found')) {
+          return res.status(404).json({ message: 'No persisted image found for this chat.' });
+        }
+        return res.status(500).json({ message: 'Expert prediction script failed', error });
+      }
+      
+      // Increment usage count on successful prediction
+      await incrementExpertAnalysisCount(user);
+      const newRemaining = remaining - 1;
+      
+      res.json({ answer: result.trim(), expertAnalysisRemaining: newRemaining });
+    });
+
+    pythonProcess.on('error', (err) => {
+      if (responseSent) return;
+      responseSent = true;
+      console.error(`Failed to start subprocess: ${err}`);
+      res.status(500).json({ message: 'Failed to start expert prediction script' });
+    });
+  } catch (err) {
+    console.error('predictExpertWithImage error:', err);
+    res.status(500).json({ message: 'Server Error', error: err.message });
+  }
+};
+
 const updateChat = async (req, res) => {
   const { messages } = req.body;
   const chat = await Chat.findById(req.params.id);
@@ -383,6 +597,9 @@ module.exports = {
   clearChats,
   predict,
   predictWithImage,
+  predictExpert,
+  predictExpertWithImage,
+  getExpertAnalysisStatus,
   transcribeAudio,
   uploadChatImage,
   getChatImage,
