@@ -26,10 +26,11 @@ const LoginPage = () => {
       });
   };
 
-  const handleGoogleLogin = () => {
-    // This will be the endpoint for our Google OAuth strategy
-    window.location.href = 'http://localhost:5000/api/auth/google';
-  };
+  const handleGoogleSignup = () => {
+  const backendURL =
+    import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+  window.location.href = `${backendURL}/api/auth/google`;
+};
 
   return (
     <div className={styles.splitContainer}>
