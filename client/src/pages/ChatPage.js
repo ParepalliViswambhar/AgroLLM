@@ -626,7 +626,7 @@ const ChatPage = () => {
         message="Are you sure you want to log out?"
         confirmText="Log Out"
         cancelText="Cancel"
-        confirmVariant="primary"
+        confirmVariant="danger"
       />
     </div>
   );
