@@ -4,6 +4,7 @@ import { FaGoogle, FaUser } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { RiLockPasswordFill } from 'react-icons/ri';
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { signUp } from '../services/api';
 import styles from './Auth.module.css';
 
@@ -12,10 +13,14 @@ const SignupPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
   const navigate = useNavigate();
 
   const handleSignup = (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     signUp({ name, email, password })
       .then((response) => {
         localStorage.setItem('userInfo', JSON.stringify(response.data));
@@ -23,7 +28,9 @@ const SignupPage = () => {
       })
       .catch((error) => {
         console.error('Signup failed:', error);
-        // You can add user-facing error handling here
+        const errorMessage = error.response?.data?.message || 'Signup failed. Please check your details and try again.';
+        setError(errorMessage);
+        setLoading(false);
       });
   };
 
@@ -42,6 +49,7 @@ const SignupPage = () => {
           <h2 className={styles.title}>Get Started Now</h2>
           <p className={styles.subtitle}>Create your credentials to access your account</p>
           <form onSubmit={handleSignup}>
+            {error && <div className={styles.errorMessage}>{error}</div>}
             <div className={styles.inputGroup}>
               <FaUser className={styles.icon} />
               <input
@@ -85,8 +93,15 @@ const SignupPage = () => {
                 {showPassword ? <BsEyeSlash size={20} /> : <BsEye size={20} /> }
               </span>
             </div>
-            <button type="submit" className={styles.button}>
-              Sign up
+            <button type="submit" className={styles.button} disabled={loading}>
+              {loading ? (
+                <>
+                  <AiOutlineLoading3Quarters className={styles.spinner} />
+                  <span>Signing up...</span>
+                </>
+              ) : (
+                'Sign up'
+              )}
             </button>
           </form>
           <div className={styles.divider}>OR</div>

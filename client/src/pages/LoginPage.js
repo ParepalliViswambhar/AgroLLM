@@ -4,17 +4,22 @@ import { FaGoogle } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { RiLockPasswordFill } from 'react-icons/ri'; 
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
+import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { login } from '../services/api';
 import styles from './Auth.module.css';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false); 
+  const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(''); 
   const navigate = useNavigate();
 
   const handleLogin = (e) => {
     e.preventDefault();
+    setLoading(true);
+    setError('');
     login({ email, password })
       .then((response) => {
         localStorage.setItem('userInfo', JSON.stringify(response.data));
@@ -22,7 +27,9 @@ const LoginPage = () => {
       })
       .catch((error) => {
         console.error('Login failed:', error);
-        // You can add user-facing error handling here
+        const errorMessage = error.response?.data?.message || 'Invalid email or password. Please try again.';
+        setError(errorMessage);
+        setLoading(false);
       });
   };
 
@@ -41,6 +48,7 @@ const LoginPage = () => {
           <h2 className={styles.title}>Welcome back!</h2>
           <p className={styles.subtitle}>Enter your credentials to access your account</p>
           <form onSubmit={handleLogin}>
+            {error && <div className={styles.errorMessage}>{error}</div>}
             <div className={styles.inputGroup}>
               <MdEmail className={styles.icon} />
               <input
@@ -73,8 +81,15 @@ const LoginPage = () => {
                 {showPassword ? <BsEyeSlash size={20} /> : <BsEye size={20} /> }
               </span>
             </div>
-            <button type="submit" className={styles.button}>
-              Login
+            <button type="submit" className={styles.button} disabled={loading}>
+              {loading ? (
+                <>
+                  <AiOutlineLoading3Quarters className={styles.spinner} />
+                  <span>Logging in...</span>
+                </>
+              ) : (
+                'Login'
+              )}
             </button>
           </form>
           <div className={styles.divider}>OR</div>
