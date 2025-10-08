@@ -192,6 +192,7 @@
 
 .ctaButton:hover {
   background: var(--primary-hover);
+  color: white;
   transform: translateY(-3px);
   box-shadow: var(--shadow-lg);
 }
