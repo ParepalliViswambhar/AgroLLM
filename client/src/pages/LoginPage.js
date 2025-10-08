@@ -22,15 +22,15 @@ const LoginPage = () => {
       })
       .catch((error) => {
         console.error('Login failed:', error);
+        // You can add user-facing error handling here
       });
   };
 
-  // ✅ FIXED Google Login Function
   const handleGoogleLogin = () => {
-    const backendURL =
-      import.meta.env.REACT_APP_API_URL || 'http://localhost:5000';
-    window.location.href = `${backendURL}/api/auth/google`;
-  };
+  const backendURL =
+    import.meta.env.REACT_APP_API_URL || 'http://localhost:5000';
+  window.location.href = `${backendURL}/api/auth/google`;
+};
 
   return (
     <div className={styles.splitContainer}>
@@ -40,9 +40,7 @@ const LoginPage = () => {
       <div className={styles.splitRight}>
         <div className={styles.authCard}>
           <h2 className={styles.title}>Welcome back!</h2>
-          <p className={styles.subtitle}>
-            Enter your credentials to access your account
-          </p>
+          <p className={styles.subtitle}>Enter your credentials to access your account</p>
           <form onSubmit={handleLogin}>
             <div className={styles.inputGroup}>
               <MdEmail className={styles.icon} />
@@ -58,7 +56,7 @@ const LoginPage = () => {
             <div className={styles.inputGroup}>
               <RiLockPasswordFill className={styles.icon} />
               <input
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 placeholder="Password"
                 className={styles.input}
                 value={password}
@@ -68,17 +66,12 @@ const LoginPage = () => {
               <span
                 className={styles.eyeIcon}
                 onClick={() => setShowPassword((prev) => !prev)}
-                style={{
-                  position: 'absolute',
-                  right: '0.75rem',
-                  cursor: 'pointer',
-                  zIndex: 2,
-                }}
+                style={{ position: 'absolute', right: '0.75rem', cursor: 'pointer', zIndex: 2 }}
                 tabIndex={0}
                 aria-label={showPassword ? 'Hide password' : 'Show password'}
                 role="button"
               >
-                {showPassword ? <BsEyeSlash size={20} /> : <BsEye size={20} />}
+                {showPassword ? <BsEyeSlash size={20} /> : <BsEye size={20} /> }
               </span>
             </div>
             <button type="submit" className={styles.button}>
@@ -86,18 +79,12 @@ const LoginPage = () => {
             </button>
           </form>
           <div className={styles.divider}>OR</div>
-          <button
-            onClick={handleGoogleLogin}
-            className={`${styles.button} ${styles.googleButton}`}
-          >
+          <button onClick={handleGoogleLogin} className={`${styles.button} ${styles.googleButton}`}>
             <FaGoogle />
             <span>Sign in with Google</span>
           </button>
           <p className={styles.footerText}>
-            Don't have an account?{' '}
-            <Link to="/signup" className={styles.link}>
-              Sign up
-            </Link>
+            Don't have an account? <Link to="/signup" className={styles.link}>Sign up</Link>
           </p>
         </div>
       </div>
