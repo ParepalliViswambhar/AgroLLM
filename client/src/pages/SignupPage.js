@@ -29,7 +29,7 @@ const SignupPage = () => {
 
   const handleGoogleSignup = () => {
   const backendURL =
-    import.meta.env.VITE_BACKEND_URL || 'http://localhost:5000';
+    import.meta.env.REACT_APP_API_URL || 'http://localhost:5000';
   window.location.href = `${backendURL}/api/auth/google`;
 };
 
