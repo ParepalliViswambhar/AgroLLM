@@ -20,7 +20,8 @@ router.get(
 
     // Redirect to the client with the token, user info can be stored in localStorage
     const userInfo = JSON.stringify({ ...req.user._doc, token });
-    res.redirect(`http://localhost:3000/auth/callback?userInfo=${encodeURIComponent(userInfo)}`);
+    const CLIENT_URL = process.env.CLIENT_URL || 'http://localhost:3000';
+    res.redirect(`${CLIENT_URL}/auth/callback?userInfo=${encodeURIComponent(userInfo)}`);
   }
 );
 
