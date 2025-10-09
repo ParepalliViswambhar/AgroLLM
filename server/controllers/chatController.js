@@ -14,11 +14,17 @@ const checkExpertAnalysisLimit = async (userId) => {
   const now = new Date();
   const resetDate = new Date(user.expertAnalysisResetDate);
   
-  // Check if 24 hours have passed since last reset
-  const hoursSinceReset = (now - resetDate) / (1000 * 60 * 60);
+  // Get midnight of today (12:00 AM)
+  const todayMidnight = new Date(now);
+  todayMidnight.setHours(0, 0, 0, 0);
   
-  if (hoursSinceReset >= 24) {
-    // Reset the count
+  // Get midnight of the reset date
+  const resetDateMidnight = new Date(resetDate);
+  resetDateMidnight.setHours(0, 0, 0, 0);
+  
+  // Check if we've crossed midnight since the last reset
+  if (todayMidnight > resetDateMidnight) {
+    // Reset the count at midnight
     user.expertAnalysisCount = 0;
     user.expertAnalysisResetDate = now;
     await user.save();

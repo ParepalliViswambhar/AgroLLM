@@ -31,6 +31,20 @@ const InputArea = ({
   const [showImageTooltip, setShowImageTooltip] = useState(false);
   const [showExpertTooltip, setShowExpertTooltip] = useState(false);
   const inputRef = useRef(null);
+  
+  // Check if expert mode is active
+  const isExpertMode = message.trim().startsWith('@expert');
+  
+  // Check if mobile device
+  const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
+  
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   
   
@@ -184,14 +198,22 @@ const InputArea = ({
           >
             <button
               type="button"
-              className={`${styles.iconButton} ${styles.expertButton} ${expertAnalysisRemaining === 0 ? styles.expertButtonDisabled : ''}`}
-              onClick={onExpertClick}
+              className={`${styles.iconButton} ${styles.expertButton} ${isExpertMode ? styles.expertButtonActive : ''} ${expertAnalysisRemaining === 0 ? styles.expertButtonDisabled : ''}`}
+              onClick={() => {
+                if (isExpertMode) {
+                  // Disable expert mode - remove @expert prefix
+                  setMessage(message.substring(7).trim());
+                } else {
+                  // Enable expert mode - add @expert prefix
+                  onExpertClick();
+                }
+              }}
               disabled={expertAnalysisRemaining === 0}>
               <IoTelescopeOutline />
             </button>
             {showExpertTooltip && (
               <div className={styles.expertTooltip}>
-                Deep Research
+                {isExpertMode ? 'Exit Deep Research' : 'Deep Research'}
                 <span className={styles.expertTooltipCount}>
                   {expertAnalysisRemaining} {expertAnalysisRemaining === 1 ? 'left' : 'left'} today
                 </span>
@@ -221,35 +243,29 @@ const InputArea = ({
             </div>
           ) : (
             <div className={styles.inputFieldWrapper}>
-              {message.trim().startsWith('@expert') && (
-                <span className={styles.expertBadge}>
-                  <IoTelescopeOutline style={{ marginRight: '0.25rem', fontSize: '0.9rem' }} />
-                  Deep Research
-                  <button
-                    type="button"
-                    className={styles.expertBadgeClose}
-                    onClick={() => setMessage(message.substring(7).trim())}
-                    title="Exit Deep Research mode"
-                  >
-                    <IoCloseCircle />
-                  </button>
-                </span>
-              )}
-              <input
-                type="text"
-                className={styles.inputField}
-                value={message.trim().startsWith('@expert') ? message.substring(8) : message}
+              <textarea
+                className={`${styles.inputField} ${isExpertMode ? styles.inputFieldExpertMode : ''}`}
+                value={isExpertMode ? message.substring(8) : message}
                 onChange={(e) => {
                   const newValue = e.target.value;
-                  if (message.trim().startsWith('@expert')) {
+                  if (isExpertMode) {
                     setMessage('@expert ' + newValue);
                   } else {
                     setMessage(newValue);
                   }
                 }}
-                placeholder="Ask me anything about agriculture..."
+                placeholder={
+                  isExpertMode 
+                    ? (isMobile ? "Deep Research mode..." : "Deep Research mode - Ask anything...") 
+                    : (isMobile ? "Ask about agriculture..." : "Ask me anything about agriculture...")
+                }
                 disabled={isLoading}
                 ref={inputRef}
+                rows={1}
+                onInput={(e) => {
+                  e.target.style.height = 'auto';
+                  e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px';
+                }}
               />
             </div>
           )}

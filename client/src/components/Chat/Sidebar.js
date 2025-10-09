@@ -13,6 +13,8 @@ const Sidebar = ({
   handleThemeToggle,
   onClearChatsClick,
   onLogoutClick,
+  isSidebarOpen,
+  onCloseSidebar,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -50,6 +52,17 @@ const Sidebar = ({
     if (typeof onLogoutClick === 'function') onLogoutClick();
   };
 
+  const handleChatSelect = (chat) => {
+    setCurrentChat(chat);
+    // Close sidebar on mobile after selecting a chat
+    if (onCloseSidebar) onCloseSidebar();
+  };
+
+  const handleNewChatClick = () => {
+    handleNewChat();
+    // Close sidebar on mobile after creating new chat
+    if (onCloseSidebar) onCloseSidebar();
+  };
 
   return (
     <div className={styles.sidebar}>
@@ -62,7 +75,7 @@ const Sidebar = ({
 
       <div className={styles.chatHistory}>
         <div className={styles.chatActions}>
-          <button className={styles.newChatButton} onClick={handleNewChat}>
+          <button className={styles.newChatButton} onClick={handleNewChatClick}>
             <FaPlus className={styles.newChatIcon} />
             New Chat
           </button>
@@ -78,7 +91,7 @@ const Sidebar = ({
           <div
             key={chat._id}
             className={`${styles.chatHistoryItem} ${currentChat?._id === chat._id ? styles.active : ''}`}
-            onClick={() => setCurrentChat(chat)}
+            onClick={() => handleChatSelect(chat)}
           >
             <div className={styles.chatInfo}>
               <p className={styles.chatTitle}>{(chat.messages && chat.messages.length > 0) ? chat.messages[0].content.substring(0, 20) + "..." : 'New Chat'}</p>

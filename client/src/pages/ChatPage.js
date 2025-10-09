@@ -567,6 +567,14 @@ const ChatPage = () => {
 
   return (
     <div className={`${styles.chatContainer} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
+      {/* Mobile overlay */}
+      {isSidebarOpen && (
+        <div 
+          className={styles.mobileOverlay} 
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
+      
       <Sidebar 
         userInfo={userInfo}
         chats={chats}
@@ -578,6 +586,8 @@ const ChatPage = () => {
         handleThemeToggle={toggleTheme}
         onClearChatsClick={() => setShowClearChatsModal(true)}
         onLogoutClick={() => setShowLogoutModal(true)}
+        isSidebarOpen={isSidebarOpen}
+        onCloseSidebar={() => setIsSidebarOpen(false)}
       />
       <ChatArea 
         currentChat={currentChat}
@@ -605,6 +615,7 @@ const ChatPage = () => {
         maxImagesPerChat={maxImagesPerChat}
         onExpertClick={handleExpertClick}
         expertAnalysisRemaining={expertAnalysisRemaining}
+        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal
