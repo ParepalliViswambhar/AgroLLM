@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
-import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle, IoTelescopeOutline } from 'react-icons/io5';
+import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle, IoTelescopeOutline, IoCameraOutline } from 'react-icons/io5';
 const InputArea = ({
   imagePreviewUrl,
   handleClearAttachment,
@@ -25,6 +25,12 @@ const InputArea = ({
   maxImagesPerChat,
   onExpertClick, // new prop for expert analysis
   expertAnalysisRemaining, // remaining expert analysis count
+  handleOpenCamera, // camera handlers
+  isCameraOpen,
+  handleCloseCamera,
+  handleCapturePhoto,
+  videoRef,
+  canvasRef,
 }) => {
   const menuRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -112,6 +118,44 @@ const InputArea = ({
 
   return (
     <>
+      {/* Camera Modal */}
+      {isCameraOpen && (
+        <div className={styles.cameraModal}>
+          <div className={styles.cameraContainer}>
+            <div className={styles.cameraHeader}>
+              <h3>Take a Photo</h3>
+              <button 
+                className={styles.cameraCloseButton}
+                onClick={handleCloseCamera}
+              >
+                <IoCloseCircle />
+              </button>
+            </div>
+            <div className={styles.cameraViewport}>
+              <video 
+                ref={videoRef}
+                autoPlay 
+                playsInline
+                className={styles.cameraVideo}
+              />
+              <canvas 
+                ref={canvasRef}
+                style={{ display: 'none' }}
+              />
+            </div>
+            <div className={styles.cameraControls}>
+              <button 
+                className={styles.cameraCaptureButton}
+                onClick={handleCapturePhoto}
+              >
+                <IoCameraOutline />
+                <span>Capture</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div
         className={styles.inputArea + (isDragActive ? ' ' + styles.dragActive : '')}
       onDragOver={handleDragOver}
@@ -201,6 +245,14 @@ const InputArea = ({
     </div>
   )}
 </div>
+                <button 
+                  onClick={() => { handleOpenCamera(); setIsAttachmentMenuOpen(false); }}
+                  disabled={isImageUploadDisabled}
+                  style={isImageUploadDisabled ? { cursor: 'not-allowed' } : {}}
+                >
+                  <IoCameraOutline />
+                  <span>Camera</span>
+                </button>
               </div>
             )}
           </div>

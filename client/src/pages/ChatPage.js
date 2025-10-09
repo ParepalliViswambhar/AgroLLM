@@ -25,7 +25,11 @@ const ChatPage = () => {
   const audioChunksRef = useRef([]);
   const audioFileInputRef = React.createRef();
   const imageFileInputRef = React.createRef();
+  const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState(null);
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(null);
@@ -231,6 +235,78 @@ const ChatPage = () => {
       // Only show local preview for now; upload and backend fetch will be handled in handleSendMessage
     }
   };
+
+  const handleOpenCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { facingMode: 'environment' } // Use back camera on mobile
+      });
+      setCameraStream(stream);
+      setIsCameraOpen(true);
+      setIsAttachmentMenuOpen(false);
+      
+      // Wait for video element to be available
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+        }
+      }, 100);
+    } catch (error) {
+      console.error('Error accessing camera:', error);
+      alert('Could not access the camera. Please check your browser permissions.');
+    }
+  };
+
+  const handleCloseCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+      setCameraStream(null);
+    }
+    setIsCameraOpen(false);
+  };
+
+  const handleCapturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const video = videoRef.current;
+      const canvas = canvasRef.current;
+      
+      // Set canvas dimensions to match video
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      
+      // Draw video frame to canvas
+      const context = canvas.getContext('2d');
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
+      
+      // Convert canvas to blob
+      canvas.toBlob((blob) => {
+        if (blob) {
+          const file = new File([blob], `camera-${Date.now()}.jpg`, { type: 'image/jpeg' });
+          setSelectedImage(file);
+          setSelectedFile(null);
+          
+          if (imagePreviewUrl) {
+            URL.revokeObjectURL(imagePreviewUrl);
+          }
+          
+          const previewUrl = URL.createObjectURL(file);
+          setImagePreviewUrl(previewUrl);
+          
+          // Close camera after capture
+          handleCloseCamera();
+        }
+      }, 'image/jpeg', 0.95);
+    }
+  };
+
+  // Cleanup camera stream on unmount
+  useEffect(() => {
+    return () => {
+      if (cameraStream) {
+        cameraStream.getTracks().forEach(track => track.stop());
+      }
+    };
+  }, [cameraStream]);
 
   const handleExpertClick = () => {
     setMessage('@expert ');
@@ -619,6 +695,12 @@ const ChatPage = () => {
         onExpertClick={handleExpertClick}
         expertAnalysisRemaining={expertAnalysisRemaining}
         onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
+        handleOpenCamera={handleOpenCamera}
+        isCameraOpen={isCameraOpen}
+        handleCloseCamera={handleCloseCamera}
+        handleCapturePhoto={handleCapturePhoto}
+        videoRef={videoRef}
+        canvasRef={canvasRef}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal
