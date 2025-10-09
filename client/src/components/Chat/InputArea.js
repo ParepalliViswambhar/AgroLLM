@@ -45,12 +45,26 @@ const InputArea = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+  
+  // Reset textarea height when message is cleared
+  useEffect(() => {
+    if (message === '' || message === '@expert ') {
+      if (inputRef.current) {
+        inputRef.current.style.height = 'auto';
+      }
+    }
+  }, [message]);
 
   
   
   const onSendClick = async (e) => {
     e.preventDefault();
     await handleSendMessage();
+    // Reset textarea height and remove focus glow after sending
+    if (inputRef.current) {
+      inputRef.current.style.height = 'auto';
+      inputRef.current.blur();
+    }
   };
   const handleDragOver = (e) => {
     e.preventDefault();

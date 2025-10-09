@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import styles from '../../pages/ChatPage.module.css';
-import { FaPlus, FaTrash, FaSignOutAlt, FaLeaf, FaChevronDown, FaSun, FaMoon } from 'react-icons/fa';
+import { FaPlus, FaTrash, FaSignOutAlt, FaLeaf, FaChevronDown, FaSun, FaMoon, FaChevronLeft, FaChevronRight } from 'react-icons/fa';
 
 const Sidebar = ({
   userInfo,
@@ -15,6 +15,8 @@ const Sidebar = ({
   onLogoutClick,
   isSidebarOpen,
   onCloseSidebar,
+  isSidebarCollapsed,
+  onToggleCollapse,
 }) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef(null);
@@ -65,29 +67,42 @@ const Sidebar = ({
   };
 
   return (
-    <div className={styles.sidebar}>
+    <div className={`${styles.sidebar} ${isSidebarCollapsed ? styles.collapsed : ''}`}>
       <div className={styles.appHeader}>
         <div className={styles.appLogo}>
           <FaLeaf className={styles.logoIcon} />
         </div>
         <h1 className={styles.appTitle}>AgroLLM</h1>
+        <button 
+          className={styles.collapseButton}
+          onClick={onToggleCollapse}
+          aria-label={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={isSidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+        >
+          {isSidebarCollapsed ? <FaChevronRight /> : <FaChevronLeft />}
+        </button>
       </div>
 
       <div className={styles.chatHistory}>
         <div className={styles.chatActions}>
-          <button className={styles.newChatButton} onClick={handleNewChatClick}>
+          <button 
+            className={styles.newChatButton} 
+            onClick={handleNewChatClick}
+            title="New Chat"
+          >
             <FaPlus className={styles.newChatIcon} />
-            New Chat
+            <span className={styles.buttonText}>New Chat</span>
           </button>
           <button 
             className={`${styles.clearChatsButton}`} 
             onClick={handleClearChatsClick}
+            title="Clear Chats"
           >
             <FaTrash />
-            Clear Chats
+            <span className={styles.buttonText}>Clear Chats</span>
           </button>
         </div>
-        {chats.map(chat => (
+        {!isSidebarCollapsed && chats.map(chat => (
           <div
             key={chat._id}
             className={`${styles.chatHistoryItem} ${currentChat?._id === chat._id ? styles.active : ''}`}
@@ -108,15 +123,23 @@ const Sidebar = ({
 
       <div className={styles.sidebarFooter}>
         <div className={styles.userDropdown} ref={dropdownRef}>
-          <button className={styles.userButton} onClick={toggleDropdown}>
+          <button 
+            className={styles.userButton} 
+            onClick={toggleDropdown}
+            title={isSidebarCollapsed ? userInfo?.name || 'User' : ''}
+          >
             <div className={styles.userInitials}>
               {userInfo?.name?.charAt(0).toUpperCase() || 'U'}
             </div>
-            <div className={styles.userInfo}>
-              <div className={styles.userName}>{userInfo?.name || 'User'}</div>
-              <div className={styles.userEmail}>{userInfo?.email || ''}</div>
-            </div>
-            <FaChevronDown className={`${styles.dropdownIcon} ${isDropdownOpen ? styles.rotated : ''}`} />
+            {!isSidebarCollapsed && (
+              <>
+                <div className={styles.userInfo}>
+                  <div className={styles.userName}>{userInfo?.name || 'User'}</div>
+                  <div className={styles.userEmail}>{userInfo?.email || ''}</div>
+                </div>
+                <FaChevronDown className={`${styles.dropdownIcon} ${isDropdownOpen ? styles.rotated : ''}`} />
+              </>
+            )}
           </button>
           
           {isDropdownOpen && (

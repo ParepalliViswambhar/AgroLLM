@@ -13,8 +13,15 @@ const ConfirmationModal = ({
 }) => {
   if (!isOpen) return null;
 
+  // Close modal when clicking on overlay (outside the modal content)
+  const handleOverlayClick = (e) => {
+    if (e.target === e.currentTarget) {
+      onClose();
+    }
+  };
+
   return (
-    <div className={styles.modalOverlay}>
+    <div className={styles.modalOverlay} onClick={handleOverlayClick}>
       <div className={styles.modalContent}>
         <div className={styles.modalHeader}>
           <h3>{title}</h3>

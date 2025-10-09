@@ -1,6 +1,7 @@
 import React from 'react';
 import styles from '../../pages/ChatPage.module.css';
-import { FaRobot, FaBars } from 'react-icons/fa';
+import { FaBars } from 'react-icons/fa';
+import { LuBot } from 'react-icons/lu';
 import MessageArea from './MessageArea';
 import InputArea from './InputArea';
 
@@ -17,7 +18,7 @@ const ChatArea = (props) => {
         >
           <FaBars />
         </button>
-        <FaRobot className={styles.chatHeaderIcon} />
+        <LuBot className={styles.chatHeaderIcon} />
         <h2 className={styles.chatHeaderTitle}>AgriChat Assistant</h2>
       </div>
 

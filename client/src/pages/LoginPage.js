@@ -1,11 +1,11 @@
 import React, { useState } from 'react'; 
 import { Link, useNavigate } from 'react-router-dom';
-import { FaGoogle } from 'react-icons/fa';
 import { MdEmail } from 'react-icons/md';
 import { RiLockPasswordFill } from 'react-icons/ri'; 
 import { BsEye, BsEyeSlash } from 'react-icons/bs';
 import { AiOutlineLoading3Quarters } from 'react-icons/ai';
 import { login } from '../services/api';
+import GoogleIcon from '../components/common/GoogleIcon';
 import styles from './Auth.module.css';
 
 const LoginPage = () => {
@@ -94,7 +94,7 @@ const LoginPage = () => {
           </form>
           <div className={styles.divider}>OR</div>
           <button onClick={handleGoogleLogin} className={`${styles.button} ${styles.googleButton}`}>
-            <FaGoogle />
+            <GoogleIcon size={20} />
             <span>Sign in with Google</span>
           </button>
           <p className={styles.footerText}>

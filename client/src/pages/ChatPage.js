@@ -30,6 +30,7 @@ const ChatPage = () => {
   const navigate = useNavigate();
   const [userInfo, setUserInfo] = useState(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
 
   // Modal states moved from Sidebar
   const [showClearChatsModal, setShowClearChatsModal] = useState(false);
@@ -566,7 +567,7 @@ const ChatPage = () => {
   })();
 
   return (
-    <div className={`${styles.chatContainer} ${isSidebarOpen ? styles.sidebarOpen : ''}`}>
+    <div className={`${styles.chatContainer} ${isSidebarOpen ? styles.sidebarOpen : ''} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
       {/* Mobile overlay */}
       {isSidebarOpen && (
         <div 
@@ -588,6 +589,8 @@ const ChatPage = () => {
         onLogoutClick={() => setShowLogoutModal(true)}
         isSidebarOpen={isSidebarOpen}
         onCloseSidebar={() => setIsSidebarOpen(false)}
+        isSidebarCollapsed={isSidebarCollapsed}
+        onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
       />
       <ChatArea 
         currentChat={currentChat}
