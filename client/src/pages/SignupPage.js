@@ -43,6 +43,10 @@ const SignupPage = () => {
   return (
     <div className={styles.splitContainer}>
       <div className={styles.splitLeft}>
+        <div className={styles.brandingContainer}>
+          <h1 className={styles.brandingText}>AgroLLM</h1>
+          <p className={styles.brandingSubtext}>Cultivating Intelligence</p>
+        </div>
         <img src="./farm-bg.png" alt="Plant" className={styles.plantImage} />
       </div>
       <div className={styles.splitRight}>
