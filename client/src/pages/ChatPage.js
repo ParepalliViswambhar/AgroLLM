@@ -88,14 +88,19 @@ const ChatPage = () => {
             })
           };
           setCurrentChat(enhanced);
+          
+          // Only clear preview after successfully loading persisted images
+          // Use setTimeout to ensure state update completes first
+          setTimeout(() => {
+            setImagePreviewUrl(null);
+            setSelectedImage(null);
+          }, 100);
         } catch (error) {
           console.error('Failed to load images:', error);
+          // Don't clear preview on error - keep blob URL alive
         }
-        
-        setImagePreviewUrl(null);
-        setSelectedImage(null);
       } else {
-        // Do not revoke here either; cleanup happens on unmount or after successful replacement
+        // Only clear when switching to no chat (not during message send)
         setImagePreviewUrl(null);
         setSelectedImage(null);
       }
@@ -325,11 +330,10 @@ const ChatPage = () => {
     const localSelectedImage = selectedImage || null;
     const hasImage = Boolean(localSelectedImage || localImageUrl);
 
-    // Always clear input and image preview after any send attempt
+    // Clear input but DON'T clear image preview yet - keep it valid until replaced
     setMessage('');
-    setImagePreviewUrl(null);
     setSelectedFile(null);
-    setSelectedImage(null);
+    // Don't clear imagePreviewUrl or selectedImage yet - keep blob URL alive
 
     // Only allow sending if there is non-empty message text
     if (!message.trim() || isLoading) return;
@@ -568,14 +572,18 @@ const ChatPage = () => {
     } finally {
       setIsLoading(false);
       setSelectedFile(null);
-      // Clear local image preview to simulate moving it to the chat bubble
-      // Revoke only if we replaced with persisted blob to avoid breaking the chat bubble
-      if (localImageUrl && replacedWithPersisted) {
-        try { URL.revokeObjectURL(localImageUrl); } catch {}
-      }
-      // Always clear image preview and selected image after send
-      setImagePreviewUrl(null);
-      setSelectedImage(null);
+      
+      // Delay cleanup to ensure server URLs are fully loaded and rendered
+      setTimeout(() => {
+        // Revoke blob URL only if we successfully replaced with persisted URL
+        if (localImageUrl && replacedWithPersisted) {
+          try { URL.revokeObjectURL(localImageUrl); } catch {}
+        }
+        // Clear image preview and selected image after server URLs are ready
+        setImagePreviewUrl(null);
+        setSelectedImage(null);
+      }, 200);
+      
       // Reset image file input to allow re-uploading same file
       if (imageFileInputRef && imageFileInputRef.current) {
         imageFileInputRef.current.value = null;
