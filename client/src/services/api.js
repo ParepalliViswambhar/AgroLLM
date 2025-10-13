@@ -63,3 +63,18 @@ export const transcribeAudio = async (audioFile) => {
     },
   });
 };
+
+// Admin endpoints
+export const getAllUsers = () => API.get('/admin/users');
+export const getUserById = (id) => API.get(`/admin/users/${id}`);
+export const updateUserRole = (id, role) => API.put(`/admin/users/${id}/role`, { role });
+export const deleteUser = (id) => API.delete(`/admin/users/${id}`);
+export const getDashboardStats = () => API.get('/admin/stats');
+
+// Feedback endpoints
+export const submitFeedback = (feedbackData) => API.post('/feedback', feedbackData);
+export const getAllFeedback = (params) => API.get('/admin/feedback', { params });
+export const getFeedbackById = (id) => API.get(`/admin/feedback/${id}`);
+export const updateFeedback = (id, data) => API.put(`/admin/feedback/${id}`, data);
+export const deleteFeedback = (id) => API.delete(`/admin/feedback/${id}`);
+export const getFeedbackStats = () => API.get('/admin/feedback/stats');

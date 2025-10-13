@@ -23,7 +23,12 @@ const LoginPage = () => {
     login({ email, password })
       .then((response) => {
         localStorage.setItem('userInfo', JSON.stringify(response.data));
-        navigate('/chat');
+        // Redirect based on user role
+        if (response.data.role === 'admin') {
+          navigate('/admin');
+        } else {
+          navigate('/chat');
+        }
       })
       .catch((error) => {
         console.error('Login failed:', error);

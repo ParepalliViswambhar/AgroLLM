@@ -1,5 +1,6 @@
 import React from 'react';
 import styles from '../../pages/ChatPage.module.css';
+import FeedbackButtons from './FeedbackButtons';
 
 const MessageArea = ({
   currentChat,
@@ -8,6 +9,7 @@ const MessageArea = ({
   isRecording,
   messageAreaRef,
   formatTime,
+  chatId,
 }) => {
   // Function to format AI response content for better readability
   const formatAIResponse = (content) => {
@@ -335,20 +337,37 @@ const MessageArea = ({
           );
 
         case 'bot':
-          return (
-            <div key={idx} className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
-              <div className={`${styles.message} ${styles.botMessage}`}>
-                <div className={styles.aiResponseContent}>
-                  {formatAIResponse(item.text)}
+          const BotMessage = () => {
+            const [isMessageHovered, setIsMessageHovered] = React.useState(false);
+            
+            return (
+              <div 
+                key={idx} 
+                className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}
+                onMouseEnter={() => setIsMessageHovered(true)}
+                onMouseLeave={() => setIsMessageHovered(false)}
+              >
+                <div className={`${styles.message} ${styles.botMessage}`}>
+                  <div className={styles.aiResponseContent}>
+                    {formatAIResponse(item.text)}
+                  </div>
                 </div>
+                <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '24px', gap: '4px'}}>
+                  <SpeakerButton answer={item.text} />
+                  <CopyButton content={copyContent} />
+                  <FeedbackButtons 
+                    messageId={item._id || `msg-${idx}`}
+                    messageContent={item.text}
+                    chatId={chatId}
+                    isParentHovered={isMessageHovered}
+                  />
+                </div>
+                <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
               </div>
-              <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '24px', gap: '4px'}}>
-                <SpeakerButton answer={item.text} />
-                <CopyButton content={copyContent} />
-              </div>
-              <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
-            </div>
-          );
+            );
+          };
+          
+          return <BotMessage key={idx} />;
 
         default:
           return null;

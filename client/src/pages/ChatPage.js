@@ -689,6 +689,7 @@ const ChatPage = () => {
       />
       <ChatArea 
         currentChat={currentChat}
+        chatId={currentChat?._id}
         isLoading={isLoading}
         isTranscribing={isTranscribing}
         isRecording={isRecording}

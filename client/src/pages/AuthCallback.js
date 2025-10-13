@@ -12,10 +12,15 @@ const AuthCallback = () => {
     if (userInfo) {
       // Decode and parse the user info
       const decodedUserInfo = decodeURIComponent(userInfo);
+      const parsedUserInfo = JSON.parse(decodedUserInfo);
       // Store it in localStorage
       localStorage.setItem('userInfo', decodedUserInfo);
-      // Redirect to the chat page
-      navigate('/chat');
+      // Redirect based on user role
+      if (parsedUserInfo.role === 'admin') {
+        navigate('/admin');
+      } else {
+        navigate('/chat');
+      }
     } else {
       // Handle error or redirect to login
       navigate('/login');
