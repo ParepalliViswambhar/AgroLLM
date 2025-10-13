@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, memo } from 'react';
 import styles from '../../pages/ChatPage.module.css';
 import { FaMicrophone, FaPaperclip, FaPaperPlane, FaSpinner } from 'react-icons/fa';
 import { IoImageOutline, IoMusicalNotesOutline, IoCloseCircle, IoTelescopeOutline, IoCameraOutline } from 'react-icons/io5';
-const InputArea = ({
+const InputArea = memo(({
   imagePreviewUrl,
   handleClearAttachment,
   selectedFile,
@@ -347,6 +347,8 @@ const InputArea = ({
     </div>
     </>
   );
-};
+});
+
+InputArea.displayName = 'InputArea';
 
 export default InputArea;

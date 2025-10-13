@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useMemo, memo, useState } from 'react';
 import styles from '../../pages/ChatPage.module.css';
 import FeedbackButtons from './FeedbackButtons';
 
-const MessageArea = ({
+const MessageArea = memo(({
   currentChat,
   isLoading,
   isTranscribing,
@@ -11,6 +11,15 @@ const MessageArea = ({
   formatTime,
   chatId,
 }) => {
+  const [modalImage, setModalImage] = useState(null);
+
+  const openImageModal = (imageUrl) => {
+    setModalImage(imageUrl);
+  };
+
+  const closeImageModal = () => {
+    setModalImage(null);
+  };
   // Function to format AI response content for better readability
   const formatAIResponse = (content) => {
     if (!content) return content;
@@ -277,7 +286,13 @@ const MessageArea = ({
               onMouseLeave={handleMouseLeave}
             >
               <div className={`${styles.message} ${styles.userMessage}`}>
-                <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
+                <img 
+                  src={item.imageUrl} 
+                  alt="Attachment" 
+                  className={styles.imagePreview}
+                  onClick={() => openImageModal(item.imageUrl)}
+                  style={{ cursor: 'pointer' }}
+                />
                 <div style={{marginTop: '0.75rem'}}>
                   {item.text}
                 </div>
@@ -301,7 +316,13 @@ const MessageArea = ({
           return (
             <div key={idx} className={`${styles.messageWrapper} ${styles.userMessageWrapper}`}>
               <div className={`${styles.message} ${styles.userMessage}`}>
-                <img src={item.imageUrl} alt="Attachment" className={styles.imagePreview} />
+                <img 
+                  src={item.imageUrl} 
+                  alt="Attachment" 
+                  className={styles.imagePreview}
+                  onClick={() => openImageModal(item.imageUrl)}
+                  style={{ cursor: 'pointer' }}
+                />
               </div>
               <div style={{display: 'flex', justifyContent: 'flex-end'}}>
                 <CopyButton content={copyContent} />
@@ -375,36 +396,136 @@ const MessageArea = ({
     });
   };
 
+  // Memoize grouped messages to prevent unnecessary recalculations
+  const groupedMessages = useMemo(() => {
+    if (!currentChat || !currentChat.messages) return [];
+    return groupMessages(currentChat.messages);
+  }, [currentChat?.messages]);
+
+  // Memoize rendered messages - only recalculate when messages or chatId changes
+  const renderedMessages = useMemo(() => {
+    return renderGroupedMessages(groupedMessages);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [groupedMessages, chatId]);
+
   return (
-    <div className={styles.messageArea} ref={messageAreaRef}>
-      {currentChat === null ? (
-        <div className={styles.welcomeContainer}>
-          <h2 className={styles.welcomeTitle}>Welcome to AgriChat!</h2>
-          <p className={styles.welcomeText}>
-            Your AI-powered assistant for all things agriculture. Ask me about crop diseases, soil management, pest control, or the latest farming techniques.
-          </p>
-          <p className={styles.welcomeText}>
-            To get started, type a message below or select a previous conversation.
-          </p>
-        </div>
-      ) : (
-        renderGroupedMessages(groupMessages(currentChat.messages))
-      )}
-      
-      {isLoading && !isTranscribing && !isRecording && (
-        <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
-          <div className={`${styles.message} ${styles.botMessage} ${styles.typingIndicator}`}>
-            <div className={styles.typingDots}>
-              <span></span>
-              <span></span>
-              <span></span>
+    <>
+      <div className={styles.messageArea} ref={messageAreaRef}>
+        {currentChat === null ? (
+          <div className={styles.welcomeContainer}>
+            <h2 className={styles.welcomeTitle}>Welcome to AgriChat!</h2>
+            <p className={styles.welcomeText}>
+              Your AI-powered assistant for all things agriculture. Ask me about crop diseases, soil management, pest control, or the latest farming techniques.
+            </p>
+            <p className={styles.welcomeText}>
+              To get started, type a message below or select a previous conversation.
+            </p>
+          </div>
+        ) : (
+          renderedMessages
+        )}
+        
+        {isLoading && !isTranscribing && !isRecording && (
+          <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>
+            <div className={`${styles.message} ${styles.botMessage} ${styles.typingIndicator}`}>
+              <div className={styles.typingDots}>
+                <span></span>
+                <span></span>
+                <span></span>
+              </div>
             </div>
           </div>
+        )}
+      </div>
+
+      {/* Image Modal */}
+      {modalImage && (
+        <div 
+          className={styles.imageModal}
+          onClick={closeImageModal}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.9)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 9999,
+            cursor: 'pointer',
+            animation: 'fadeIn 0.2s ease-in-out'
+          }}
+        >
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              closeImageModal();
+            }}
+            style={{
+              position: 'absolute',
+              top: '24px',
+              right: '24px',
+              background: 'rgba(255, 255, 255, 0.15)',
+              backdropFilter: 'blur(10px)',
+              WebkitBackdropFilter: 'blur(10px)',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              color: 'white',
+              fontSize: '28px',
+              fontWeight: '300',
+              width: '44px',
+              height: '44px',
+              borderRadius: '50%',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              zIndex: 10000,
+              lineHeight: '1',
+              padding: 0,
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.25)';
+              e.currentTarget.style.transform = 'scale(1.1) rotate(90deg)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'rgba(255, 255, 255, 0.15)';
+              e.currentTarget.style.transform = 'scale(1) rotate(0deg)';
+              e.currentTarget.style.borderColor = 'rgba(255, 255, 255, 0.2)';
+            }}
+            onMouseDown={(e) => {
+              e.currentTarget.style.transform = 'scale(0.95) rotate(90deg)';
+            }}
+            onMouseUp={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1) rotate(90deg)';
+            }}
+          >
+            ×
+          </button>
+          <img 
+            src={modalImage} 
+            alt="Full size" 
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              maxWidth: '90%',
+              maxHeight: '90%',
+              objectFit: 'contain',
+              borderRadius: '8px',
+              boxShadow: '0 8px 32px rgba(0, 0, 0, 0.5)',
+              cursor: 'default'
+            }}
+          />
         </div>
       )}
-    </div>
+    </>
   );
-};
+});
+
+MessageArea.displayName = 'MessageArea';
 
 // Speaker button for reading bot answers aloud
 const SpeakerButton = ({ answer }) => {
