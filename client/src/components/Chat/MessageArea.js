@@ -10,6 +10,7 @@ const MessageArea = memo(({
   messageAreaRef,
   formatTime,
   chatId,
+  onSuggestedQuestionClick,
 }) => {
   const [modalImage, setModalImage] = useState(null);
 
@@ -20,6 +21,90 @@ const MessageArea = memo(({
   const closeImageModal = () => {
     setModalImage(null);
   };
+  // Function to parse bot response and extract suggested questions
+  const parseBotResponse = (content) => {
+    if (!content) return { mainAnswer: content, suggestedQuestions: [] };
+
+    // Look for "Similar questions" section with various patterns in multiple languages
+    const patterns = [
+      // English
+      /💡\s*Similar questions:?\s*([\s\S]*?)$/i,
+      /Similar questions:?\s*([\s\S]*?)$/i,
+      
+      // Hindi (समान प्रश्न / समान सवाल)
+      /💡\s*समान प्रश्न:?\s*([\s\S]*?)$/i,
+      /समान प्रश्न:?\s*([\s\S]*?)$/i,
+      /💡\s*समान सवाल:?\s*([\s\S]*?)$/i,
+      /समान सवाल:?\s*([\s\S]*?)$/i,
+      
+      // Telugu (సారూప్య ప్రశ్నలు)
+      /💡\s* సిమిలార్ ప్రశ్నలు:?\s*([\s\S]*?)$/i,
+      /సారూప్య ప్రశ్నలు:?\s*([\s\S]*?)$/i,
+      
+      // Tamil (ஒத்த கேள்விகள்)
+      /💡\s*ஒத்த கேள்விகள்:?\s*([\s\S]*?)$/i,
+      /ஒத்த கேள்விகள்:?\s*([\s\S]*?)$/i,
+      
+      // Kannada (ಸಮಾನ ಪ್ರಶ್ನೆಗಳು)
+      /💡\s*ಸಮಾನ ಪ್ರಶ್ನೆಗಳು:?\s*([\s\S]*?)$/i,
+      /ಸಮಾನ ಪ್ರಶ್ನೆಗಳು:?\s*([\s\S]*?)$/i,
+      
+      // Malayalam (സമാന ചോദ്യങ്ങൾ)
+      /💡\s*സമാന ചോദ്യങ്ങൾ:?\s*([\s\S]*?)$/i,
+      /സമാന ചോദ്യങ്ങൾ:?\s*([\s\S]*?)$/i,
+      
+      // Bengali (অনুরূপ প্রশ্ন)
+      /💡\s*অনুরূপ প্রশ্ন:?\s*([\s\S]*?)$/i,
+      /অনুরূপ প্রশ্ন:?\s*([\s\S]*?)$/i,
+      
+      // Marathi (समान प्रश्न)
+      /💡\s*समान प्रश्न:?\s*([\s\S]*?)$/i,
+      /समान प्रश्न:?\s*([\s\S]*?)$/i,
+      
+      // Gujarati (સમાન પ્રશ્નો)
+      /💡\s*સમાન પ્રશ્નો:?\s*([\s\S]*?)$/i,
+      /સમાન પ્રશ્નો:?\s*([\s\S]*?)$/i,
+      
+      // Punjabi (ਸਮਾਨ ਸਵਾਲ)
+      /💡\s*ਸਮਾਨ ਸਵਾਲ:?\s*([\s\S]*?)$/i,
+      /ਸਮਾਨ ਸਵਾਲ:?\s*([\s\S]*?)$/i,
+      
+      // Fallback patterns
+      /💡\s*Know more about:?\s*([\s\S]*?)$/i,
+      /Know more about:?\s*([\s\S]*?)$/i,
+      /🔍\s*You might also ask:?\s*([\s\S]*?)$/i,
+      /You might also ask:?\s*([\s\S]*?)$/i,
+      /Suggested questions:?\s*([\s\S]*?)$/i,
+      /Related questions:?\s*([\s\S]*?)$/i
+    ];
+
+    let mainAnswer = content;
+    let suggestedQuestions = [];
+
+    for (const pattern of patterns) {
+      const match = content.match(pattern);
+      if (match) {
+        // Extract main answer (everything before the suggested questions)
+        mainAnswer = content.substring(0, match.index).trim();
+        
+        // Extract suggested questions
+        const questionsText = match[1].trim();
+        // Split by newlines and filter out empty lines
+        suggestedQuestions = questionsText
+          .split('\n')
+          .map(q => q.trim())
+          .filter(q => q.length > 0)
+          .map(q => q.replace(/^[-•*\d+\.\)\s]+/, '').trim()) // Remove bullets, numbers, etc.
+          .filter(q => q.length > 0)
+          .slice(0, 3); // Limit to 3 questions
+        
+        break;
+      }
+    }
+
+    return { mainAnswer, suggestedQuestions };
+  };
+
   // Function to format AI response content for better readability
   const formatAIResponse = (content) => {
     if (!content) return content;
@@ -360,6 +445,7 @@ const MessageArea = memo(({
         case 'bot':
           const BotMessage = () => {
             const [isMessageHovered, setIsMessageHovered] = React.useState(false);
+            const { mainAnswer, suggestedQuestions } = parseBotResponse(item.text);
             
             return (
               <div 
@@ -370,11 +456,11 @@ const MessageArea = memo(({
               >
                 <div className={`${styles.message} ${styles.botMessage}`}>
                   <div className={styles.aiResponseContent}>
-                    {formatAIResponse(item.text)}
+                    {formatAIResponse(mainAnswer)}
                   </div>
                 </div>
                 <div style={{display: 'flex', justifyContent: 'flex-end', alignItems: 'center', minHeight: '24px', gap: '4px'}}>
-                  <SpeakerButton answer={item.text} />
+                  <SpeakerButton answer={mainAnswer} />
                   <CopyButton content={copyContent} />
                   <FeedbackButtons 
                     messageId={item._id || `msg-${idx}`}
@@ -384,6 +470,43 @@ const MessageArea = memo(({
                   />
                 </div>
                 <div className={styles.messageTimestamp}>{formatTime(item.timestamp)}</div>
+                
+                {/* Suggested Questions Section */}
+                {suggestedQuestions.length > 0 && (
+                  <div className={styles.suggestedQuestionsContainer}>
+                    <div className={styles.suggestedQuestionsHeader}>
+                      <span className={styles.suggestedQuestionsIcon}>💡</span>
+                      <span className={styles.suggestedQuestionsTitle}>Similar questions</span>
+                    </div>
+                    <div className={styles.suggestedQuestionsList}>
+                      {suggestedQuestions.map((question, qIdx) => (
+                        <button
+                          key={qIdx}
+                          className={styles.suggestedQuestionItem}
+                          onClick={() => onSuggestedQuestionClick && onSuggestedQuestionClick(question)}
+                          title="Click to ask this question"
+                        >
+                          <span className={styles.suggestedQuestionNumber}>{qIdx + 1}</span>
+                          <span className={styles.suggestedQuestionText}>{question}</span>
+                          <svg 
+                            className={styles.suggestedQuestionArrow}
+                            width="16" 
+                            height="16" 
+                            viewBox="0 0 24 24" 
+                            fill="none" 
+                            stroke="currentColor" 
+                            strokeWidth="2" 
+                            strokeLinecap="round" 
+                            strokeLinejoin="round"
+                          >
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                            <polyline points="12 5 19 12 12 19"></polyline>
+                          </svg>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             );
           };
@@ -531,8 +654,55 @@ MessageArea.displayName = 'MessageArea';
 const SpeakerButton = ({ answer }) => {
   const [isSpeaking, setIsSpeaking] = React.useState(false);
   const [hovered, setHovered] = React.useState(false);
+  const [showWarning, setShowWarning] = React.useState(false);
   const synthRef = React.useRef(window.speechSynthesis);
   const utterRef = React.useRef(null);
+
+  // Function to detect language from text
+  const detectLanguage = (text) => {
+    if (!text) return 'en-US';
+    
+    // Indian language Unicode ranges
+    const languagePatterns = {
+      'hi-IN': /[\u0900-\u097F]/, // Hindi (Devanagari)
+      'te-IN': /[\u0C00-\u0C7F]/, // Telugu
+      'ta-IN': /[\u0B80-\u0BFF]/, // Tamil
+      'bn-IN': /[\u0980-\u09FF]/, // Bengali
+      'mr-IN': /[\u0900-\u097F]/, // Marathi (Devanagari - same as Hindi)
+      'gu-IN': /[\u0A80-\u0AFF]/, // Gujarati
+      'kn-IN': /[\u0C80-\u0CFF]/, // Kannada
+      'ml-IN': /[\u0D00-\u0D7F]/, // Malayalam
+      'pa-IN': /[\u0A00-\u0A7F]/, // Punjabi (Gurmukhi)
+      'or-IN': /[\u0B00-\u0B7F]/, // Odia
+      'as-IN': /[\u0980-\u09FF]/, // Assamese (Bengali script)
+    };
+
+    // Check for Indian language scripts
+    for (const [lang, pattern] of Object.entries(languagePatterns)) {
+      if (pattern.test(text)) {
+        return lang;
+      }
+    }
+
+    // Default to English
+    return 'en-US';
+  };
+
+  // Function to get the best voice for a language
+  const getVoiceForLanguage = (lang) => {
+    const voices = synthRef.current.getVoices();
+    
+    // Try to find a voice that matches the exact language
+    let voice = voices.find(v => v.lang === lang);
+    
+    // If not found, try to find a voice with the same language code (e.g., 'hi' from 'hi-IN')
+    if (!voice) {
+      const langCode = lang.split('-')[0];
+      voice = voices.find(v => v.lang.startsWith(langCode));
+    }
+    
+    return { voice, hasNativeVoice: !!voice };
+  };
 
   const handleSpeak = () => {
     if (isSpeaking) {
@@ -541,8 +711,17 @@ const SpeakerButton = ({ answer }) => {
       return;
     }
     if (!answer) return;
+
+    // Detect language and get appropriate voice
+    const detectedLang = detectLanguage(answer);
+    const { voice } = getVoiceForLanguage(detectedLang);
+
     const utter = new window.SpeechSynthesisUtterance(answer);
-    utter.rate = 1;
+    utter.lang = detectedLang;
+    if (voice) {
+      utter.voice = voice;
+    }
+    utter.rate = 0.9; // Slightly slower for better clarity
     utter.pitch = 1;
     utter.volume = 1;
     utter.onend = () => setIsSpeaking(false);
@@ -553,6 +732,17 @@ const SpeakerButton = ({ answer }) => {
   };
 
   React.useEffect(() => {
+    // Load voices when component mounts
+    const loadVoices = () => {
+      synthRef.current.getVoices();
+    };
+    
+    // Chrome loads voices asynchronously
+    if (synthRef.current.onvoiceschanged !== undefined) {
+      synthRef.current.onvoiceschanged = loadVoices;
+    }
+    loadVoices();
+
     return () => {
       if (isSpeaking) synthRef.current.cancel();
     };

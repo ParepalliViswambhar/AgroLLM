@@ -324,6 +324,17 @@ const ChatPage = () => {
     }, 0);
   };
 
+  const handleSuggestedQuestionClick = (question) => {
+    setMessage(question);
+    // Focus the input field after inserting the question
+    setTimeout(() => {
+      const inputField = document.querySelector(`.${styles.inputField}`);
+      if (inputField) {
+        inputField.focus();
+      }
+    }, 0);
+  };
+
   const handleSendMessage = async () => {
     // Snapshot attachment state BEFORE clearing, so UI can show immediately
     const localImageUrl = imagePreviewUrl || null;
@@ -729,6 +740,7 @@ const ChatPage = () => {
         handleCapturePhoto={handleCapturePhoto}
         videoRef={videoRef}
         canvasRef={canvasRef}
+        onSuggestedQuestionClick={handleSuggestedQuestionClick}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal
