@@ -6,6 +6,58 @@ const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
+// Language detection helper function
+const detectLanguage = (text) => {
+  if (!text || typeof text !== 'string') return 'en';
+  
+  // Count characters in different Unicode ranges
+  let teluguChars = 0;
+  let hindiChars = 0;
+  let englishChars = 0;
+  
+  for (let char of text) {
+    const code = char.charCodeAt(0);
+    
+    // Telugu Unicode range: 0C00-0C7F
+    if (code >= 0x0C00 && code <= 0x0C7F) {
+      teluguChars++;
+    }
+    // Hindi/Devanagari Unicode range: 0900-097F
+    else if (code >= 0x0900 && code <= 0x097F) {
+      hindiChars++;
+    }
+    // English (basic Latin): 0041-005A, 0061-007A
+    else if ((code >= 0x0041 && code <= 0x005A) || (code >= 0x0061 && code <= 0x007A)) {
+      englishChars++;
+    }
+  }
+  
+  // Determine language based on character count
+  const total = teluguChars + hindiChars + englishChars;
+  if (total === 0) return 'en'; // Default to English if no detectable characters
+  
+  if (teluguChars > hindiChars && teluguChars > englishChars) {
+    return 'te'; // Telugu
+  } else if (hindiChars > teluguChars && hindiChars > englishChars) {
+    return 'hi'; // Hindi
+  } else {
+    return 'en'; // English
+  }
+};
+
+// Detect language from messages array
+const detectLanguageFromMessages = (messages) => {
+  if (!messages || messages.length === 0) return 'en';
+  
+  // Concatenate all user messages to detect language
+  const userText = messages
+    .filter(msg => msg.sender === 'user')
+    .map(msg => msg.content)
+    .join(' ');
+  
+  return detectLanguage(userText);
+};
+
 // Helper function to check if user needs reset and get remaining count
 const checkExpertAnalysisLimit = async (userId) => {
   const user = await User.findById(userId);
@@ -271,11 +323,15 @@ const createChat = async (req, res) => {
   const { messages } = req.body;
 
   const sessionId = uuidv4();
+  
+  // Detect language from messages
+  const detectedLanguage = detectLanguageFromMessages(messages);
 
   const chat = new Chat({
     user: req.user._id,
     sessionId,
     messages,
+    language: detectedLanguage,
   });
 
   const createdChat = await chat.save();
@@ -536,6 +592,11 @@ const updateChat = async (req, res) => {
 
   if (chat && chat.user.toString() === req.user._id.toString()) {
     chat.messages = messages;
+    
+    // Update language based on current messages
+    const detectedLanguage = detectLanguageFromMessages(messages);
+    chat.language = detectedLanguage;
+    
     const updatedChat = await chat.save();
     res.json(updatedChat);
   } else {

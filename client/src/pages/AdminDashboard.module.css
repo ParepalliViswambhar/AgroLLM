@@ -120,6 +120,19 @@
   color: #22c55e;
 }
 
+.mainLoaderContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh; /* Use viewport height to center vertically on the page */
+  width: 100vw; /* Use viewport width to center horizontally on the page */
+  position: fixed; /* Fix the loader in the center of the viewport */
+  top: 0;
+  left: 0;
+  background-color: var(--background-color); /* Match background to current styles */
+  z-index: 9999; /* Ensure it's on top of other content */
+}
+
 .error {
   background: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.3);
@@ -938,4 +951,190 @@
   background: rgba(0, 0, 0, 0.03);
   border: 1px solid rgba(34, 197, 94, 0.4);
   color: #1e293b;
+}
+
+/* Moderation Buttons */
+.timeoutBtn {
+  background: rgba(251, 191, 36, 0.1);
+  border-color: rgba(251, 191, 36, 0.3);
+  color: #fbbf24;
+}
+
+.timeoutBtn:hover {
+  background: rgba(251, 191, 36, 0.2);
+}
+
+.blockBtn {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.blockBtn:hover {
+  background: rgba(239, 68, 68, 0.2);
+}
+
+.unblockBtn {
+  background: rgba(34, 197, 94, 0.1);
+  border-color: rgba(34, 197, 94, 0.3);
+  color: #22c55e;
+}
+
+.unblockBtn:hover {
+  background: rgba(34, 197, 94, 0.2);
+}
+
+/* Status Badges */
+.badgeActive {
+  background: rgba(34, 197, 94, 0.2);
+  color: #22c55e;
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badgeTimeout {
+  background: rgba(251, 191, 36, 0.2);
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.badgeBlocked {
+  background: rgba(239, 68, 68, 0.2);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Analytics Section */
+.analyticsSection {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.2);
+  border-radius: 1rem;
+  padding: 1.5rem;
+  min-height: 400px; /* Ensure enough height for centering */
+  display: flex;
+  flex-direction: column;
+}
+
+.analyticsLoaderContainer {
+  flex-grow: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.lightMode .analyticsSection {
+  background: rgba(255, 255, 255, 0.8);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.analyticsHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 2rem;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.periodSelect {
+  padding: 0.5rem 1rem;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+  border-radius: 0.5rem;
+  color: #fff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+.periodSelect:hover {
+  border-color: #22c55e;
+  background: rgba(34, 197, 94, 0.1);
+}
+
+.periodSelect option {
+  background: #1a1f2e;
+  color: #fff;
+}
+
+.lightMode .periodSelect {
+  background: rgba(0, 0, 0, 0.03);
+  border: 1px solid rgba(34, 197, 94, 0.4);
+  color: #1e293b;
+}
+
+.lightMode .periodSelect option {
+  background: #ffffff;
+  color: #1e293b;
+}
+
+.analyticsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+  gap: 1.5rem;
+}
+
+.chartWrapper {
+  min-height: 300px;
+}
+
+.dangerBtn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  border: none;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dangerBtn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 5px 20px rgba(239, 68, 68, 0.4);
+}
+
+.dangerBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.warningText {
+  color: #fbbf24;
+  background: rgba(251, 191, 36, 0.1);
+  border: 1px solid rgba(251, 191, 36, 0.3);
+  padding: 1rem;
+  border-radius: 0.5rem;
+  margin: 0;
+}
+
+.lightMode .warningText {
+  color: #d97706;
+  background: rgba(251, 191, 36, 0.15);
+  border: 1px solid rgba(251, 191, 36, 0.4);
+}
+
+@media (max-width: 1024px) {
+  .analyticsGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .analyticsHeader {
+    flex-direction: column;
+    align-items: flex-start;
+  }
 }

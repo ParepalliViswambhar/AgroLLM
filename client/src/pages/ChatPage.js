@@ -42,6 +42,9 @@ const ChatPage = () => {
   
   // Expert Analysis state
   const [expertAnalysisRemaining, setExpertAnalysisRemaining] = useState(2);
+  
+  // User moderation state
+  const [userStatus, setUserStatus] = useState({ isBlocked: false, isTimedOut: false, reason: '', timeoutUntil: null });
 
 
   useEffect(() => {
@@ -129,8 +132,19 @@ const ChatPage = () => {
       const response = await getChats();
       const reversedChats = response.data.reverse();
       setChats(reversedChats);
+      // Clear any previous moderation status on successful fetch
+      setUserStatus({ isBlocked: false, isTimedOut: false, reason: '', timeoutUntil: null });
     } catch (error) {
       console.error('Failed to fetch chats:', error);
+      // Check if user is blocked or timed out
+      if (error.response?.status === 403) {
+        const data = error.response.data;
+        if (data.isBlocked) {
+          setUserStatus({ isBlocked: true, isTimedOut: false, reason: data.reason, timeoutUntil: null });
+        } else if (data.isTimedOut) {
+          setUserStatus({ isBlocked: false, isTimedOut: true, reason: data.reason, timeoutUntil: data.timeoutUntil });
+        }
+      }
     }
   };
 
@@ -741,6 +755,7 @@ const ChatPage = () => {
         videoRef={videoRef}
         canvasRef={canvasRef}
         onSuggestedQuestionClick={handleSuggestedQuestionClick}
+        userStatus={userStatus}
       />
       {/* Clear Chats Confirmation Modal */}
       <ConfirmationModal

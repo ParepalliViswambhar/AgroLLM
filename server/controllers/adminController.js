@@ -19,6 +19,10 @@ const getAllUsers = async (req, res) => {
         role: user.role,
         googleId: user.googleId,
         expertAnalysisCount: user.expertAnalysisCount,
+        isBlocked: user.isBlocked,
+        blockedReason: user.blockedReason,
+        timeoutUntil: user.timeoutUntil,
+        timeoutReason: user.timeoutReason,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
       })),
@@ -165,10 +169,234 @@ const getDashboardStats = async (req, res) => {
   }
 };
 
+// @desc    Get analytics data
+// @route   GET /api/admin/analytics
+// @access  Private/Admin
+const getAnalytics = async (req, res) => {
+  try {
+    const { period = 'monthly' } = req.query; // 'weekly' or 'monthly'
+    
+    const now = new Date();
+    const chatActivity = [];
+
+    if (period === 'weekly') {
+      // Get last 7 weeks (Sunday to Sunday)
+      for (let i = 6; i >= 0; i--) {
+        const endDate = new Date(now);
+        // Go back i weeks
+        endDate.setDate(endDate.getDate() - (i * 7));
+        // Set to the next Sunday (or today if it's Sunday)
+        const dayOfWeek = endDate.getDay();
+        endDate.setDate(endDate.getDate() + (7 - dayOfWeek) % 7);
+        endDate.setHours(23, 59, 59, 999);
+        
+        // Start date is the previous Sunday
+        const startDate = new Date(endDate);
+        startDate.setDate(startDate.getDate() - 6);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const count = await Chat.countDocuments({
+          createdAt: { $gte: startDate, $lte: endDate }
+        });
+        
+        chatActivity.push({
+          period: `${startDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - ${endDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`,
+          count,
+          startDate,
+          endDate
+        });
+      }
+    } else {
+      // Get last 7 months (1st to last day of month)
+      for (let i = 6; i >= 0; i--) {
+        const endDate = new Date(now.getFullYear(), now.getMonth() - i + 1, 0);
+        endDate.setHours(23, 59, 59, 999);
+        
+        const startDate = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const count = await Chat.countDocuments({
+          createdAt: { $gte: startDate, $lte: endDate }
+        });
+        
+        chatActivity.push({
+          period: startDate.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }),
+          count,
+          startDate,
+          endDate
+        });
+      }
+    }
+
+    // Language usage stats - fixed to handle null/undefined values properly
+    const languageStats = await Chat.aggregate([
+      {
+        $group: { 
+          _id: { 
+            $ifNull: ['$language', 'en'] 
+          }, 
+          count: { $sum: 1 } 
+        }
+      },
+      { $sort: { count: -1 } },
+      {
+        $project: {
+          _id: 0,
+          language: '$_id',
+          count: 1
+        }
+      }
+    ]);
+
+    // Response satisfaction from feedback
+    const satisfactionStats = await Feedback.aggregate([
+      {
+        $match: { rating: { $exists: true } }
+      },
+      {
+        $group: {
+          _id: '$rating',
+          count: { $sum: 1 }
+        }
+      }
+    ]);
+
+    const totalRatings = satisfactionStats.reduce((sum, stat) => sum + stat.count, 0);
+    const positiveRatings = satisfactionStats.find(s => s._id === 'positive')?.count || 0;
+    const satisfactionRate = totalRatings > 0 ? ((positiveRatings / totalRatings) * 100).toFixed(1) : 0;
+
+    res.json({
+      success: true,
+      analytics: {
+        languageStats,
+        satisfaction: {
+          rate: satisfactionRate,
+          positive: positiveRatings,
+          negative: satisfactionStats.find(s => s._id === 'negative')?.count || 0,
+          total: totalRatings
+        },
+        chatActivity
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching analytics', error: error.message });
+  }
+};
+// @desc    Timeout user for 24 hours
+// @route   POST /api/admin/users/:id/timeout
+// @access  Private/Admin
+const timeoutUser = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(403).json({ message: 'Cannot timeout admin users' });
+    }
+
+    const timeoutUntil = new Date();
+    timeoutUntil.setHours(timeoutUntil.getHours() + 24);
+
+    user.timeoutUntil = timeoutUntil;
+    user.timeoutReason = reason || 'Violated community guidelines';
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'User timed out for 24 hours',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        timeoutUntil: user.timeoutUntil,
+        timeoutReason: user.timeoutReason
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error timing out user', error: error.message });
+  }
+};
+
+// @desc    Block user permanently
+// @route   POST /api/admin/users/:id/block
+// @access  Private/Admin
+const blockUser = async (req, res) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    if (user.role === 'admin') {
+      return res.status(403).json({ message: 'Cannot block admin users' });
+    }
+
+    user.isBlocked = true;
+    user.blockedReason = reason || 'Violated terms of service';
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'User blocked successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isBlocked: user.isBlocked,
+        blockedReason: user.blockedReason
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error blocking user', error: error.message });
+  }
+};
+
+// @desc    Unblock user
+// @route   POST /api/admin/users/:id/unblock
+// @access  Private/Admin
+const unblockUser = async (req, res) => {
+  try {
+    const user = await User.findById(req.params.id);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    user.isBlocked = false;
+    user.blockedReason = '';
+    user.timeoutUntil = null;
+    user.timeoutReason = '';
+    await user.save();
+
+    res.json({
+      success: true,
+      message: 'User unblocked successfully',
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isBlocked: user.isBlocked
+      }
+    });
+  } catch (error) {
+    res.status(500).json({ message: 'Error unblocking user', error: error.message });
+  }
+};
+
 module.exports = {
   getAllUsers,
   getUserById,
   updateUserRole,
   deleteUser,
   getDashboardStats,
+  getAnalytics,
+  timeoutUser,
+  blockUser,
+  unblockUser,
 };

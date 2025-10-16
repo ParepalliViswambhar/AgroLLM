@@ -70,6 +70,12 @@ export const getUserById = (id) => API.get(`/admin/users/${id}`);
 export const updateUserRole = (id, role) => API.put(`/admin/users/${id}/role`, { role });
 export const deleteUser = (id) => API.delete(`/admin/users/${id}`);
 export const getDashboardStats = () => API.get('/admin/stats');
+export const getAnalytics = (period = 'monthly') => API.get('/admin/analytics', { params: { period } });
+
+// User moderation endpoints
+export const timeoutUser = (id, reason) => API.post(`/admin/users/${id}/timeout`, { reason });
+export const blockUser = (id, reason) => API.post(`/admin/users/${id}/block`, { reason });
+export const unblockUser = (id) => API.post(`/admin/users/${id}/unblock`);
 
 // Feedback endpoints
 export const submitFeedback = (feedbackData) => API.post('/feedback', feedbackData);

@@ -31,6 +31,7 @@ const InputArea = memo(({
   handleCapturePhoto,
   videoRef,
   canvasRef,
+  userStatus, // user moderation status
 }) => {
   const menuRef = useRef(null);
   const [isDragActive, setIsDragActive] = useState(false);
@@ -40,6 +41,9 @@ const InputArea = memo(({
   
   // Check if expert mode is active
   const isExpertMode = message.trim().startsWith('@expert');
+  
+  // Check if user is blocked or timed out
+  const isUserRestricted = userStatus?.isBlocked || userStatus?.isTimedOut;
   
   // Check if mobile device
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
@@ -201,7 +205,8 @@ const InputArea = memo(({
             <button
               type="button"
               className={`${styles.iconButton} ${styles.clipButton}`}
-              onClick={() => setIsAttachmentMenuOpen(!isAttachmentMenuOpen)}>
+              onClick={() => setIsAttachmentMenuOpen(!isAttachmentMenuOpen)}
+              disabled={isUserRestricted}>
               <FaPaperclip />
             </button>
             {isAttachmentMenuOpen && (
@@ -286,13 +291,12 @@ const InputArea = memo(({
               </div>
             )}
           </div>
-
+          
           <button
             type="button"
-            className={`${styles.iconButton} ${styles.micButton} ${
-              isRecording ? styles.recording : ''
-            }`}
-            onClick={handleToggleRecording}>
+            className={`${styles.iconButton} ${isRecording ? styles.recording : ''}`}
+            onClick={handleToggleRecording}
+            disabled={isLoading || isTranscribing || isUserRestricted}>
             <FaMicrophone />
           </button>
 
@@ -321,11 +325,13 @@ const InputArea = memo(({
                   }
                 }}
                 placeholder={
-                  isExpertMode 
-                    ? (isMobile ? "Deep Research mode..." : "Deep Research mode - Ask anything...") 
-                    : (isMobile ? "Ask about agriculture..." : "Ask me anything about agriculture...")
+                  isUserRestricted 
+                    ? "You cannot send messages at this time"
+                    : isExpertMode 
+                      ? (isMobile ? "Deep Research mode..." : "Deep Research mode - Ask anything...") 
+                      : (isMobile ? "Ask about agriculture..." : "Ask me anything about agriculture...")
                 }
-                disabled={isLoading}
+                disabled={isLoading || isUserRestricted}
                 ref={inputRef}
                 rows={1}
                 onInput={(e) => {

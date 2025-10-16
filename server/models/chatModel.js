@@ -18,6 +18,8 @@ const chatSchema = mongoose.Schema(
         timestamp: { type: Date, default: Date.now },
       },
     ],
+    topics: [{ type: String }], // Track crops, diseases, etc.
+    language: { type: String, default: 'en' },
   },
   { timestamps: true }
 );

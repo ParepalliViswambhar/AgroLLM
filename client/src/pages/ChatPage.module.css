@@ -1106,6 +1106,67 @@
   background: transparent;
 }
 
+/* Welcome Message - Centered in MessageArea */
+.welcomeMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  height: 100%;
+  padding: 2.5rem 2rem;
+  max-width: 600px;
+  margin: 0 auto;
+  color: var(--text-secondary);
+  animation: fadeInUp 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.welcomeMessage h2 {
+  font-size: 2.5rem;
+  font-weight: 900;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.welcomeGradientText {
+  background: var(--gradient-primary);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.welcomeEmoji {
+  font-size: 2.5rem;
+  display: inline-block;
+  animation: wave 2s ease-in-out infinite;
+}
+
+@keyframes wave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-10deg);
+  }
+  75% {
+    transform: rotate(10deg);
+  }
+}
+
+.welcomeMessage p {
+  line-height: 1.6;
+  margin-bottom: 0.75rem;
+  font-size: 1.1rem;
+  color: var(--text-secondary);
+  font-weight: 500;
+}
+
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -2133,6 +2194,22 @@
     padding: 1.875rem 1rem;
   }
   
+  .welcomeMessage {
+    padding: 1.875rem 1rem;
+  }
+  
+  .welcomeMessage h2 {
+    font-size: 2rem;
+  }
+  
+  .welcomeEmoji {
+    font-size: 2rem;
+  }
+  
+  .welcomeMessage p {
+    font-size: 1rem;
+  }
+  
   .sidebar {
     width: 90%;
     max-width: 300px;
@@ -2343,6 +2420,18 @@
   
   .welcomeTitle {
     font-size: 1.75rem;
+  }
+  
+  .welcomeMessage h2 {
+    font-size: 1.75rem;
+  }
+  
+  .welcomeEmoji {
+    font-size: 1.75rem;
+  }
+  
+  .welcomeMessage p {
+    font-size: 0.95rem;
   }
   
   .message {
@@ -2727,4 +2816,93 @@
 .copyButton:disabled {
   cursor: default;
   opacity: 0.5;
+}
+
+/* Moderation Warning Styles */
+.moderationWarning {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%);
+  border: 2px solid rgba(239, 68, 68, 0.3);
+  border-radius: 12px;
+  padding: 1.5rem;
+  margin: 1rem;
+  display: flex;
+  gap: 1rem;
+  align-items: flex-start;
+  animation: slideDown 0.3s ease-out;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.moderationIcon {
+  font-size: 2.5rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.moderationContent {
+  flex: 1;
+}
+
+.moderationTitle {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ef4444;
+  margin: 0 0 0.75rem 0;
+}
+
+.moderationMessage {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin: 0 0 0.5rem 0;
+  line-height: 1.5;
+}
+
+.moderationReason {
+  font-size: 0.9rem;
+  color: var(--text-secondary);
+  margin: 0.5rem 0;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 6px;
+  border-left: 3px solid #ef4444;
+}
+
+.moderationReason strong {
+  color: var(--text-primary);
+}
+
+.moderationContact {
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  margin: 0.75rem 0 0 0;
+  font-style: italic;
+}
+
+@media (max-width: 768px) {
+  .moderationWarning {
+    flex-direction: column;
+    padding: 1rem;
+    margin: 0.75rem;
+  }
+  
+  .moderationIcon {
+    font-size: 2rem;
+  }
+  
+  .moderationTitle {
+    font-size: 1.1rem;
+  }
+  
+  .moderationMessage {
+    font-size: 0.9rem;
+  }
 }

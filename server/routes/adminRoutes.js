@@ -5,6 +5,10 @@ const {
   updateUserRole,
   deleteUser,
   getDashboardStats,
+  getAnalytics,
+  timeoutUser,
+  blockUser,
+  unblockUser,
 } = require('../controllers/adminController');
 const {
   getAllFeedback,
@@ -23,12 +27,18 @@ router.use(adminOnly);
 
 // Dashboard stats
 router.get('/stats', getDashboardStats);
+router.get('/analytics', getAnalytics);
 
 // User management
 router.get('/users', getAllUsers);
 router.get('/users/:id', getUserById);
 router.put('/users/:id/role', updateUserRole);
 router.delete('/users/:id', deleteUser);
+
+// User moderation
+router.post('/users/:id/timeout', timeoutUser);
+router.post('/users/:id/block', blockUser);
+router.post('/users/:id/unblock', unblockUser);
 
 // Feedback management
 router.get('/feedback/stats', getFeedbackStats);

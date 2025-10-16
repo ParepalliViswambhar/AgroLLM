@@ -19,6 +19,32 @@ const protect = async (req, res, next) => {
           return res.status(401).json({ message: 'Not authorized, user not found' });
       }
 
+      // Check if user is blocked
+      if (req.user.isBlocked) {
+        return res.status(403).json({ 
+          message: 'Your account has been blocked',
+          reason: req.user.blockedReason,
+          isBlocked: true
+        });
+      }
+
+      // Check if user is timed out
+      if (req.user.timeoutUntil && new Date() < new Date(req.user.timeoutUntil)) {
+        return res.status(403).json({ 
+          message: 'Your account is temporarily suspended',
+          reason: req.user.timeoutReason,
+          timeoutUntil: req.user.timeoutUntil,
+          isTimedOut: true
+        });
+      }
+
+      // Clear timeout if expired
+      if (req.user.timeoutUntil && new Date() >= new Date(req.user.timeoutUntil)) {
+        req.user.timeoutUntil = null;
+        req.user.timeoutReason = '';
+        await req.user.save();
+      }
+
       next();
     } catch (error) {
       return res.status(401).json({ message: 'Not authorized, token failed' });

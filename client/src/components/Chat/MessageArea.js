@@ -11,6 +11,7 @@ const MessageArea = memo(({
   formatTime,
   chatId,
   onSuggestedQuestionClick,
+  userStatus,
 }) => {
   const [modalImage, setModalImage] = useState(null);
 
@@ -29,7 +30,7 @@ const MessageArea = memo(({
     const patterns = [
       // English
       /💡\s*Similar questions:?\s*([\s\S]*?)$/i,
-      /Similar questions:?\s*([\s\S]*?)$/i,
+     
       
       // Hindi (समान प्रश्न / समान सवाल)
       /💡\s*समान प्रश्न:?\s*([\s\S]*?)$/i,
@@ -67,15 +68,7 @@ const MessageArea = memo(({
       
       // Punjabi (ਸਮਾਨ ਸਵਾਲ)
       /💡\s*ਸਮਾਨ ਸਵਾਲ:?\s*([\s\S]*?)$/i,
-      /ਸਮਾਨ ਸਵਾਲ:?\s*([\s\S]*?)$/i,
-      
-      // Fallback patterns
-      /💡\s*Know more about:?\s*([\s\S]*?)$/i,
-      /Know more about:?\s*([\s\S]*?)$/i,
-      /🔍\s*You might also ask:?\s*([\s\S]*?)$/i,
-      /You might also ask:?\s*([\s\S]*?)$/i,
-      /Suggested questions:?\s*([\s\S]*?)$/i,
-      /Related questions:?\s*([\s\S]*?)$/i
+      /ਸਮਾਨ ਸਵਾਲ:?\s*([\s\S]*?)$/i
     ];
 
     let mainAnswer = content;
@@ -533,20 +526,47 @@ const MessageArea = memo(({
 
   return (
     <>
-      <div className={styles.messageArea} ref={messageAreaRef}>
-        {currentChat === null ? (
-          <div className={styles.welcomeContainer}>
-            <h2 className={styles.welcomeTitle}>Welcome to AgriChat!</h2>
-            <p className={styles.welcomeText}>
-              Your AI-powered assistant for all things agriculture. Ask me about crop diseases, soil management, pest control, or the latest farming techniques.
-            </p>
-            <p className={styles.welcomeText}>
-              To get started, type a message below or select a previous conversation.
-            </p>
+      <div ref={messageAreaRef} className={styles.messageArea}>
+        {/* User Status Warning */}
+        {(userStatus?.isBlocked || userStatus?.isTimedOut) && (
+          <div className={styles.moderationWarning}>
+            <div className={styles.moderationIcon}>
+              {userStatus.isBlocked ? '🚫' : '⏰'}
+            </div>
+            <div className={styles.moderationContent}>
+              <h3 className={styles.moderationTitle}>
+                {userStatus.isBlocked ? 'Account Blocked' : 'Account Temporarily Suspended'}
+              </h3>
+              <p className={styles.moderationMessage}>
+                {userStatus.isBlocked 
+                  ? 'Your account has been blocked. You cannot send messages at this time.'
+                  : `Your account is temporarily suspended until ${new Date(userStatus.timeoutUntil).toLocaleString()}.`
+                }
+              </p>
+              {userStatus.reason && (
+                <p className={styles.moderationReason}>
+                  <strong>Reason:</strong> {userStatus.reason}
+                </p>
+              )}
+              <p className={styles.moderationContact}>
+                Please contact support if you believe this is an error.
+              </p>
+            </div>
           </div>
-        ) : (
-          renderedMessages
         )}
+        
+        {!currentChat && (
+          <div className={styles.welcomeMessage}>
+            <h2>
+              <span className={styles.welcomeGradientText}>Welcome to AgriChat!</span> 
+              <span className={styles.welcomeEmoji}>🌾</span>
+            </h2>
+            <p>Your AI-powered agricultural assistant</p>
+            <p>Ask me anything about crops, diseases, farming techniques, and more!</p>
+          </div>
+        )}
+        
+        {renderedMessages}
         
         {isLoading && !isTranscribing && !isRecording && (
           <div className={`${styles.messageWrapper} ${styles.botMessageWrapper}`}>

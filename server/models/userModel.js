@@ -10,6 +10,11 @@ const userSchema = mongoose.Schema(
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     expertAnalysisCount: { type: Number, default: 0 },
     expertAnalysisResetDate: { type: Date, default: Date.now },
+    isBlocked: { type: Boolean, default: false },
+    blockedReason: { type: String, default: '' },
+    timeoutUntil: { type: Date, default: null },
+    timeoutReason: { type: String, default: '' },
+    preferredLanguage: { type: String, default: 'en' },
   },
   { timestamps: true }
 );
