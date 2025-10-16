@@ -29,7 +29,7 @@ const MessageArea = memo(({
     // Look for "Similar questions" section with various patterns in multiple languages
     const patterns = [
       // English
-      /💡\s*([\s\S]*?)$/i,
+      /^💡\s*(.*?):\*\*$/i,
   ];
     let mainAnswer = content;
     let suggestedQuestions = [];
