@@ -1,6 +1,6 @@
 // Encapsulates image logic: upload, fetch, store, retrieve, delete
 // Uses API helpers from api.js
-import { uploadChatImage, getChatImage, getChatImageById, getAllChatImages, deleteChatImage, deleteChatImageById } from './api';
+import { uploadChatImage, getChatImage, getChatImageById, getAllChatImages, deleteChatImage } from './api';
 
 // Upload image to a chat (persist in MongoDB)
 export async function uploadImage(chatId, file) {

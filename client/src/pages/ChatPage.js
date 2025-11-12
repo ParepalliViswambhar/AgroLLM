@@ -1,12 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getChats, createChat, predict, deleteChat, updateChat, transcribeAudio, getAnswer, predictExpert, predictExpertWithImage, getExpertAnalysisStatus } from '../services/api';
-import { uploadImage as uploadChatImageSvc, removeImage as removeChatImageSvc, fetchImage as fetchChatImage, fetchAllImages, fetchImageById } from '../services/imageChatHandler';
+import { uploadImage as uploadChatImageSvc, fetchImage as fetchChatImage, fetchAllImages, fetchImageById } from '../services/imageChatHandler';
 import { useTheme } from '../contexts/ThemeContext';
 import styles from './ChatPage.module.css';
 import Sidebar from '../components/Chat/Sidebar';
 import ChatArea from '../components/Chat/ChatArea';
-import InputArea from '../components/Chat/InputArea';
 
 import ConfirmationModal from '../components/common/ConfirmationModal';
 
@@ -109,6 +108,7 @@ const ChatPage = () => {
       }
     };
     loadPersistedImages();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [currentChat?._id]);
 
   useEffect(() => {

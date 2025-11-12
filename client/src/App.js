@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import { ThemeProvider } from './contexts/ThemeContext';
 import LandingPage from './pages/LandingPage';
@@ -10,6 +10,20 @@ import AdminDashboard from './pages/AdminDashboard';
 import './App.css';
 
 function App() {
+  const synthRef = useRef(null);
+
+  useEffect(() => {
+    // Store the current ref value in a variable
+    const currentSynth = synthRef.current;
+    
+    return () => {
+      // Use the stored variable in cleanup
+      if (currentSynth) {
+        // Cleanup logic here if needed
+      }
+    };
+  }, []);
+
   return (
     <ThemeProvider>
             <Router>
