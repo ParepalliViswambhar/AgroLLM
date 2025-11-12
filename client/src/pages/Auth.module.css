@@ -214,11 +214,11 @@
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  padding: 3rem 2.5rem;
+  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2.5rem);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-2xl);
   width: 100%;
-  max-width: 500px;
+  max-width: min(500px, calc(100vw - 2rem));
   text-align: center;
   color: var(--text-primary);
   border: 1px solid var(--border-light);
@@ -249,13 +249,13 @@
 
 /* Title */
 .title {
-  font-size: 2rem;
+  font-size: clamp(1.375rem, 3.5vw, 2rem);
   font-weight: 900;
   background: var(--gradient-primary);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
-  margin-bottom: 0.75rem;
+  margin-bottom: clamp(0.375rem, 1vw, 0.75rem);
   letter-spacing: -0.04em;
   line-height: 1.1;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -263,8 +263,8 @@
 
 .subtitle {
   color: var(--text-secondary);
-  margin-bottom: 2rem;
-  font-size: 1rem;
+  margin-bottom: clamp(1rem, 3vw, 2rem);
+  font-size: clamp(0.8125rem, 1.5vw, 1rem);
   line-height: 1.5;
   font-weight: 500;
 }
@@ -307,12 +307,12 @@
 
 .input {
   width: 100%;
-  padding: 0.875rem 0.875rem 0.875rem 2.75rem;
+  padding: clamp(0.625rem, 1.5vw, 0.875rem) clamp(0.625rem, 1.5vw, 0.875rem) clamp(0.625rem, 1.5vw, 0.875rem) clamp(2.25rem, 4vw, 2.75rem);
   border: 2px solid var(--border-color);
   background: var(--bg-card);
   color: var(--text-primary);
   border-radius: var(--radius-lg);
-  font-size: 0.95rem;
+  font-size: clamp(0.75rem, 1.5vw, 0.95rem);
   font-family: 'Plus Jakarta Sans', sans-serif;
   box-sizing: border-box;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -383,17 +383,17 @@
 /* Button */
 .button {
   width: 100%;
-  padding: 1rem 1.5rem;
+  padding: clamp(0.625rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.5rem);
   border: none;
   border-radius: var(--radius-lg);
   background: var(--gradient-primary);
   color: white;
-  font-size: 1rem;
+  font-size: clamp(0.75rem, 1.5vw, 1rem);
   font-weight: 700;
   font-family: 'Plus Jakarta Sans', sans-serif;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  margin-top: 1.25rem;
+  margin-top: clamp(0.75rem, 2vw, 1.25rem);
   position: relative;
   overflow: hidden;
   letter-spacing: 0.01em;
@@ -401,7 +401,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 0.625rem;
+  gap: clamp(0.375rem, 1vw, 0.625rem);
 }
 
 .button:disabled {
@@ -545,8 +545,8 @@
   }
   
   .splitLeft {
-    min-height: 200px;
-    max-height: 250px;
+    min-height: clamp(180px, 25vh, 250px);
+    max-height: clamp(180px, 25vh, 250px);
     border-radius: 0;
     border-top-left-radius: 0;
     border-top-right-radius: 0;
@@ -558,185 +558,109 @@
   }
   
   .brandingText {
-    font-size: 2.5rem;
+    font-size: clamp(2rem, 5vw, 2.5rem);
   }
   
   .brandingSubtext {
-    font-size: 0.75rem;
+    font-size: clamp(0.65rem, 1.5vw, 0.75rem);
     margin-top: 0.5rem;
   }
   
   .splitRight {
-    padding: 2rem 1rem;
-    min-height: calc(100vh - 250px);
+    padding: clamp(1.5rem, 3vw, 2rem) clamp(1rem, 2vw, 1.5rem);
+    min-height: calc(100vh - clamp(180px, 25vh, 250px));
   }
   
   .authCard {
-    padding: 2rem 1.5rem;
+    padding: clamp(1.75rem, 3vw, 2rem) clamp(1.25rem, 2.5vw, 1.5rem);
     max-width: 100%;
     min-height: auto;
   }
   
   .title {
-    font-size: 1.625rem;
+    font-size: clamp(1.5rem, 3vw, 1.625rem);
   }
   
   .subtitle {
-    font-size: 0.9rem;
-    margin-bottom: 1.25rem;
+    font-size: clamp(0.8125rem, 1.5vw, 0.9rem);
+    margin-bottom: clamp(1rem, 2vw, 1.25rem);
   }
   
   .inputGroup {
-    margin-bottom: 0.875rem;
+    margin-bottom: clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .input {
-    padding: 0.875rem 0.875rem 0.875rem 2.5rem;
-    font-size: 0.875rem;
+    padding: clamp(0.75rem, 1.5vw, 0.875rem) clamp(0.75rem, 1.5vw, 0.875rem) clamp(0.75rem, 1.5vw, 0.875rem) clamp(2.25rem, 4vw, 2.5rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .icon {
-    left: 0.875rem;
-    font-size: 0.9375rem;
+    left: clamp(0.75rem, 1.5vw, 0.875rem);
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   }
   
   .button {
-    padding: 0.875rem 1.125rem;
-    font-size: 0.875rem;
+    padding: clamp(0.75rem, 1.5vw, 0.875rem) clamp(1rem, 2vw, 1.125rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .divider {
-    margin: 1rem 0;
-    font-size: 0.75rem;
+    margin: clamp(0.875rem, 1.5vw, 1rem) 0;
+    font-size: clamp(0.6875rem, 1.5vw, 0.75rem);
   }
   
   .footerText {
-    font-size: 0.8125rem;
-    margin-top: 1rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
+    margin-top: clamp(0.875rem, 1.5vw, 1rem);
   }
   
   .errorMessage {
-    font-size: 0.8125rem;
-    padding: 0.625rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
+    padding: clamp(0.5rem, 1vw, 0.625rem);
   }
 }
 
 @media (max-width: 480px) {
   .splitLeft {
-    min-height: 150px;
-    max-height: 180px;
-  }
-  
-  .brandingText {
-    font-size: 2rem;
-  }
-  
-  .brandingSubtext {
-    font-size: 0.65rem;
-    letter-spacing: 0.1em;
+    min-height: clamp(120px, 20vh, 180px);
+    max-height: clamp(120px, 20vh, 180px);
   }
   
   .splitRight {
-    padding: 1.5rem 1rem;
-    min-height: calc(100vh - 180px);
+    min-height: calc(100vh - clamp(120px, 20vh, 180px));
   }
   
   .authCard {
-    padding: 1.75rem 1.25rem;
-    margin: 0;
     border-radius: var(--radius-lg);
   }
   
-  .title {
-    font-size: 1.5rem;
-    margin-bottom: 0.375rem;
-  }
-  
-  .subtitle {
-    font-size: 0.8125rem;
-    margin-bottom: 1rem;
-  }
-  
-  .inputGroup {
-    margin-bottom: 0.75rem;
-  }
-  
-  .input {
-    padding: 0.75rem 0.75rem 0.75rem 2.375rem;
-    font-size: 0.8125rem;
-  }
-  
-  .icon {
-    left: 0.75rem;
-    font-size: 0.875rem;
-  }
-  
   .eyeIcon {
-    right: 0.625rem;
-  }
-  
-  .button {
-    padding: 0.75rem 1rem;
-    font-size: 0.8125rem;
-    margin-top: 0.75rem;
-  }
-  
-  .divider {
-    margin: 0.875rem 0;
-    font-size: 0.6875rem;
+    right: clamp(0.5rem, 1vw, 0.625rem);
   }
   
   .googleButton {
     gap: 0.5rem;
   }
   
-  .footerText {
-    font-size: 0.75rem;
-    margin-top: 0.875rem;
-  }
-  
-  .errorMessage {
-    font-size: 0.75rem;
-    padding: 0.5rem;
-    margin-bottom: 0.75rem;
-  }
-  
   .spinner {
-    font-size: 1rem;
-    margin-right: 0.375rem;
+    font-size: clamp(0.9375rem, 1.5vw, 1rem);
+    margin-right: clamp(0.25rem, 0.5vw, 0.375rem);
   }
 }
 
 @media (max-width: 360px) {
   .splitLeft {
-    min-height: 120px;
-    max-height: 150px;
+    min-height: clamp(100px, 18vh, 150px);
+    max-height: clamp(100px, 18vh, 150px);
+  }
+  
+  .splitRight {
+    min-height: calc(100vh - clamp(100px, 18vh, 150px));
+    padding: clamp(1rem, 2vw, 1.5rem) clamp(0.75rem, 1.5vw, 1rem);
   }
   
   .authCard {
-    padding: 1.5rem 1rem;
-  }
-  
-  .title {
-    font-size: 1.375rem;
-  }
-  
-  .subtitle {
-    font-size: 0.75rem;
-  }
-  
-  .input {
-    padding: 0.625rem 0.625rem 0.625rem 2.25rem;
-    font-size: 0.75rem;
-  }
-  
-  .icon {
-    left: 0.625rem;
-    font-size: 0.8125rem;
-  }
-  
-  .button {
-    padding: 0.625rem 0.875rem;
-    font-size: 0.75rem;
+    padding: clamp(1.25rem, 2.5vw, 1.5rem) clamp(0.875rem, 1.5vw, 1rem);
   }
 }

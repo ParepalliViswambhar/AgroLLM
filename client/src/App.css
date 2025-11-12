@@ -46,9 +46,9 @@ button, .btn {
   color: white;
   border: none;
   border-radius: var(--radius-lg);
-  padding: 0.75rem 1.5rem;
+  padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(1.25rem, 2.5vw, 1.5rem);
   cursor: pointer;
-  font-size: 0.95rem;
+  font-size: clamp(0.875rem, 1.5vw, 0.95rem);
   font-weight: 600;
   font-family: 'Plus Jakarta Sans', sans-serif;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -56,6 +56,8 @@ button, .btn {
   position: relative;
   overflow: hidden;
   letter-spacing: 0.01em;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button::before, .btn::before {
@@ -94,11 +96,12 @@ input, textarea, select {
   color: var(--text-primary);
   border: 2px solid var(--border-color);
   border-radius: var(--radius-lg);
-  padding: 0.75rem 1rem;
-  font-size: 0.95rem;
+  padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.875rem, 2vw, 1rem);
+  font-size: clamp(0.875rem, 1.5vw, 0.95rem);
   font-family: 'Plus Jakarta Sans', sans-serif;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   box-shadow: var(--shadow-sm);
+  touch-action: manipulation;
 }
 
 input:focus, textarea:focus, select:focus {
@@ -118,7 +121,7 @@ input::placeholder, textarea::placeholder {
   width: 100%;
   max-width: 1280px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 clamp(1rem, 3vw, 1.5rem);
 }
 
 .text-center {

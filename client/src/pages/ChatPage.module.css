@@ -711,9 +711,15 @@
 .messageWrapper {
   display: flex;
   flex-direction: column;
-  max-width: 70%;
+  max-width: min(70%, 800px);
   animation: messageSlideIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   margin: 0.125rem 0;
+}
+
+@media (max-width: 1024px) {
+  .messageWrapper {
+    max-width: 80%;
+  }
 }
 
 @keyframes messageSlideIn {
@@ -739,18 +745,20 @@
 
 .message {
   max-width: 100%;
-  padding: 0.875rem 1.125rem;
+  padding: clamp(0.875rem, 2vw, 1.125rem) clamp(1rem, 2.5vw, 1.375rem);
   border-radius: var(--radius-lg);
   line-height: 1.6;
   position: relative;
   word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
   white-space: pre-wrap;
-  font-size: 0.9375rem;
+  font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   font-weight: 500;
   box-shadow: var(--shadow-md);
   display: flex;
   flex-direction: column;
-  gap: 0.625rem;
+  gap: clamp(0.5rem, 1vw, 0.625rem);
   transition: all 0.3s ease;
 }
 
@@ -786,21 +794,27 @@
   position: relative;
   box-shadow: var(--shadow-md);
   margin: 0.125rem 0;
-  padding: 0.875rem 1.125rem;
-  max-width: 70%;
+  padding: clamp(0.875rem, 2vw, 1.125rem) clamp(1rem, 2.5vw, 1.375rem);
+  max-width: 100%;
   font-weight: 500;
   line-height: 1.6;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* AI Response Content Styling */
 .aiResponseContent {
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
+  gap: clamp(0.625rem, 1.5vw, 0.75rem);
   line-height: 1.6;
-  font-size: 0.9375rem;
+  font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   font-weight: 500;
   color: var(--text-primary);
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .aiSectionHeader {
@@ -815,23 +829,29 @@
 }
 
 .aiParagraph {
-  font-size: 0.9375rem;
+  font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   line-height: 1.6;
   color: var(--text-primary);
-  margin: 0.375rem 0;
+  margin: clamp(0.25rem, 0.5vw, 0.375rem) 0;
   text-align: left;
   padding: 0;
   font-weight: 500;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .aiListItem {
-  font-size: 0.9375rem;
+  font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   line-height: 1.6;
   color: var(--text-primary);
-  margin: 0.25rem 0;
-  padding-left: 1.375rem;
+  margin: clamp(0.1875rem, 0.5vw, 0.25rem) 0;
+  padding-left: clamp(1.125rem, 2vw, 1.375rem);
   position: relative;
   font-weight: 500;
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .aiListItem::before {
@@ -910,12 +930,15 @@
   border-radius: var(--radius-lg);
   position: relative;
   margin: 0.125rem 0;
-  padding: 0.875rem 1.125rem;
+  padding: clamp(0.875rem, 2vw, 1.125rem) clamp(1rem, 2.5vw, 1.375rem);
   max-width: 100%;
   line-height: 1.6;
   align-self: flex-end;
   box-shadow: var(--shadow-md), var(--shadow-glow);
   border: 1px solid rgba(255, 255, 255, 0.1);
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 /* Message Timestamps */
@@ -1964,14 +1987,13 @@
     bottom: 0;
     z-index: 100;
     transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-    width: 85%;
-    max-width: 340px;
+    width: min(85%, 340px);
     box-shadow: var(--shadow-2xl);
   }
   
   /* Ensure sidebar is never collapsed on mobile */
   .sidebar.collapsed {
-    width: 85%;
+    width: min(85%, 340px);
   }
   
   .sidebar.collapsed .appTitle,
@@ -1984,17 +2006,23 @@
   }
   
   .chatArea {
-    padding: 0 0.5rem;
+    padding: 0 clamp(0.25rem, 1vw, 0.5rem);
   }
   
   .chatHeader {
-    margin: 0.75rem auto 0;
+    margin: clamp(0.5rem, 1.5vw, 0.75rem) auto 0;
     border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    padding: clamp(1rem, 2vw, 1.25rem) clamp(1.25rem, 2.5vw, 1.5rem);
+  }
+  
+  .chatHeaderTitle {
+    font-size: clamp(1.0625rem, 2vw, 1.1875rem);
   }
   
   .inputArea {
-    margin: 0 auto 0.75rem;
+    margin: 0 auto clamp(0.5rem, 1.5vw, 0.75rem);
     border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    padding: clamp(0.875rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.25rem);
   }
   
   .expertBadgeText {
@@ -2023,95 +2051,80 @@
   }
   
   .messageWrapper {
-    max-width: 90%;
+    max-width: 92%;
   }
   
   .message {
-    padding: 1.125rem 1.375rem;
-    font-size: 0.9375rem;
+    padding: clamp(1rem, 2vw, 1.125rem) clamp(1.125rem, 2.5vw, 1.375rem);
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   }
   
   .welcomeContainer {
-    padding: 2.5rem 1.25rem;
+    padding: clamp(1.875rem, 4vw, 2.5rem) clamp(1rem, 2vw, 1.25rem);
   }
   
   .welcomeTitle {
-    font-size: 2.25rem;
+    font-size: clamp(1.875rem, 4vw, 2.25rem);
   }
   
   .welcomeText {
-    font-size: 1.0625rem;
-  }
-  
-  .chatHeader {
-    padding: 1.25rem 1.5rem;
-  }
-  .chatHeaderTitle {
-    font-size: 1.1875rem;
-  }
-  
-  .chatArea {
-    padding: 0;
-  }
-  
-  .inputArea {
-    padding: 0.875rem 1rem;
+    font-size: clamp(1rem, 1.5vw, 1.0625rem);
   }
   
   .messageArea {
-    padding: 1.75rem 1.25rem;
-    gap: 1.75rem;
+    padding: clamp(1.25rem, 3vw, 1.75rem) clamp(1rem, 2vw, 1.25rem);
+    gap: clamp(1.5rem, 3vw, 1.75rem);
   }
   
   .appHeader {
-    padding: 1.75rem 1.5rem 1.5rem;
+    padding: clamp(1.5rem, 3vw, 1.75rem) clamp(1.25rem, 2.5vw, 1.5rem) clamp(1.25rem, 2.5vw, 1.5rem);
   }
   
   .appTitle {
-    font-size: 1.5rem;
+    font-size: clamp(1.375rem, 2.5vw, 1.5rem);
   }
   
   .chatActions {
-    padding: 1.5rem;
+    padding: clamp(1.25rem, 2.5vw, 1.5rem);
     gap: 0.75rem;
   }
   
   .newChatButton,
   .clearChatsButton {
-    padding: 0.875rem 1.25rem;
-    font-size: 0.875rem;
+    padding: clamp(0.75rem, 1.5vw, 0.875rem) clamp(1rem, 2vw, 1.25rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .chatHistoryItem {
-    padding: 0.875rem 1.5rem;
-    margin: 0 0.75rem 0.5rem;
+    padding: clamp(0.75rem, 1.5vw, 0.875rem) clamp(1.25rem, 2.5vw, 1.5rem);
+    margin: 0 clamp(0.625rem, 1.5vw, 0.75rem) 0.5rem;
   }
   
   .chatTitle {
-    font-size: 0.875rem;
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .inputForm {
-    padding: 0.75rem 0.75rem 0.75rem 1.125rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.625rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.125rem);
   }
   
   .inputField {
-    font-size: 0.9375rem;
-    padding: 0.75rem 0.5rem;
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.375rem, 1vw, 0.5rem);
   }
   
   .inputField::placeholder {
-    font-size: 0.875rem;
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .sendButton {
-    width: 44px;
-    height: 44px;
-    padding: 0.75rem;
+    width: clamp(40px, 8vw, 44px);
+    height: clamp(40px, 8vw, 44px);
+    padding: clamp(0.625rem, 1.5vw, 0.75rem);
   }
   
   .iconButton {
-    padding: 0.75rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem);
   }
   
   .modalContent {
@@ -2120,210 +2133,194 @@
   }
   
   .modalHeader {
-    padding: 1.5rem 1.875rem;
+    padding: clamp(1.25rem, 2.5vw, 1.5rem) clamp(1.5rem, 3vw, 1.875rem);
   }
   
   .modalHeader h3 {
-    font-size: 1.1875rem;
+    font-size: clamp(1.0625rem, 2vw, 1.1875rem);
   }
   
   .modalBody {
-    padding: 1.875rem;
-    font-size: 0.9375rem;
+    padding: clamp(1.5rem, 3vw, 1.875rem);
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   }
   
   .modalFooter {
-    padding: 1.5rem 1.875rem;
+    padding: clamp(1.25rem, 2.5vw, 1.5rem) clamp(1.5rem, 3vw, 1.875rem);
   }
 }
 
 @media (max-width: 480px) {
   .chatArea {
-    padding: 0 0.25rem;
+    padding: 0 clamp(0.125rem, 0.5vw, 0.25rem);
   }
   
   .chatHeader {
-    padding: 1rem 1.25rem;
-    margin: 0.5rem auto 0;
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2vw, 1.25rem);
+    margin: clamp(0.375rem, 1vw, 0.5rem) auto 0;
     border-radius: var(--radius-lg) var(--radius-lg) 0 0;
   }
   
-  .inputArea {
-    margin: 0 auto 0.5rem;
-    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
-    padding: 1rem 1.25rem;
-  }
-  
   .chatHeaderTitle {
-    font-size: 1.0625rem;
+    font-size: clamp(1rem, 2vw, 1.0625rem);
   }
   
   .chatHeaderIcon {
-    font-size: 1.375rem;
-    margin-right: 0.875rem;
+    font-size: clamp(1.25rem, 2.5vw, 1.375rem);
+    margin-right: clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .inputArea {
-    padding: 1rem 1.25rem;
+    margin: 0 auto clamp(0.375rem, 1vw, 0.5rem);
+    border-radius: 0 0 var(--radius-lg) var(--radius-lg);
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2vw, 1.25rem);
   }
   
   .messageArea {
-    padding: 1.25rem 1rem;
-    gap: 1.5rem;
+    padding: clamp(1rem, 2vw, 1.25rem) clamp(0.875rem, 1.5vw, 1rem);
+    gap: clamp(1.25rem, 2.5vw, 1.5rem);
   }
   
   .messageWrapper {
-    max-width: 95%;
+    max-width: 94%;
   }
   
   .message {
-    padding: 1rem 1.125rem;
-    font-size: 0.875rem;
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2vw, 1.125rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
     border-radius: var(--radius-xl);
   }
   
-  .welcomeTitle {
-    font-size: 2rem;
-  }
-  
-  .welcomeText {
-    font-size: 1rem;
-  }
-  
-  .welcomeContainer {
-    padding: 1.875rem 1rem;
-  }
-  
+  .welcomeContainer,
   .welcomeMessage {
-    padding: 1.875rem 1rem;
+    padding: clamp(1.5rem, 3vw, 1.875rem) clamp(0.875rem, 1.5vw, 1rem);
   }
   
   .welcomeMessage h2 {
-    font-size: 2rem;
+    font-size: clamp(1.75rem, 4vw, 2rem);
   }
   
   .welcomeEmoji {
-    font-size: 2rem;
+    font-size: clamp(1.75rem, 4vw, 2rem);
   }
   
   .welcomeMessage p {
-    font-size: 1rem;
+    font-size: clamp(0.9375rem, 1.5vw, 1rem);
   }
   
   .sidebar {
-    width: 90%;
-    max-width: 300px;
+    width: min(90%, 300px);
   }
   
   .appHeader {
-    padding: 1.5rem 1.25rem 1.25rem;
+    padding: clamp(1.25rem, 2.5vw, 1.5rem) clamp(1rem, 2vw, 1.25rem) clamp(1rem, 2vw, 1.25rem);
   }
   
   .appTitle {
-    font-size: 1.375rem;
+    font-size: clamp(1.25rem, 2.5vw, 1.375rem);
   }
   
   .appLogo {
-    width: 44px;
-    height: 44px;
-    margin-right: 0.875rem;
+    width: clamp(40px, 8vw, 44px);
+    height: clamp(40px, 8vw, 44px);
+    margin-right: clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .logoIcon {
-    font-size: 1.375rem;
+    font-size: clamp(1.25rem, 2.5vw, 1.375rem);
   }
   
   .chatActions {
-    padding: 1.25rem;
-    gap: 0.625rem;
+    padding: clamp(1rem, 2vw, 1.25rem);
+    gap: clamp(0.5rem, 1vw, 0.625rem);
   }
   
   .newChatButton,
   .clearChatsButton {
-    padding: 0.75rem 1rem;
-    font-size: 0.8125rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.875rem, 1.5vw, 1rem);
+    font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
   }
   
   .newChatIcon {
-    margin-right: 0.625rem;
-    font-size: 0.9375rem;
+    margin-right: clamp(0.5rem, 1vw, 0.625rem);
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   }
   
   .chatHistoryItem {
-    padding: 0.75rem 1.25rem;
-    margin: 0 0.625rem 0.5rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.25rem);
+    margin: 0 clamp(0.5rem, 1vw, 0.625rem) 0.5rem;
   }
   
   .chatTitle {
-    font-size: 0.8125rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
   }
   
   .deleteButton {
-    padding: 0.5rem;
+    padding: clamp(0.375rem, 1vw, 0.5rem);
   }
   
   .inputForm {
-    padding: 0.625rem 0.625rem 0.625rem 1rem;
+    padding: clamp(0.5rem, 1vw, 0.625rem) clamp(0.5rem, 1vw, 0.625rem) clamp(0.5rem, 1vw, 0.625rem) clamp(0.875rem, 1.5vw, 1rem);
     border-radius: var(--radius-xl);
   }
   
   .inputField {
-    font-size: 0.875rem;
-    padding: 0.625rem 0.375rem;
-    max-height: 110px;
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
+    padding: clamp(0.5rem, 1vw, 0.625rem) clamp(0.25rem, 0.5vw, 0.375rem);
+    max-height: clamp(100px, 20vh, 110px);
   }
   
   .inputField::placeholder {
-    font-size: 0.8125rem;
+    font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
   }
   
   .sendButton {
-    width: 40px;
-    height: 40px;
-    padding: 0.625rem;
+    width: clamp(36px, 7vw, 40px);
+    height: clamp(36px, 7vw, 40px);
+    padding: clamp(0.5rem, 1vw, 0.625rem);
   }
   
   .iconButton {
-    padding: 0.625rem;
-    font-size: 0.9375rem;
+    padding: clamp(0.5rem, 1vw, 0.625rem);
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
   }
   
   .micButton,
   .expertButton {
-    margin-right: 0.625rem;
+    margin-right: clamp(0.5rem, 1vw, 0.625rem);
   }
   
   .imagePreviewContainer {
-    max-width: 220px;
-    margin: 0 0.875rem 0.875rem;
+    max-width: clamp(180px, 40vw, 220px);
+    margin: 0 clamp(0.75rem, 1.5vw, 0.875rem) clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .imagePreview {
-    width: 220px;
-    height: 220px;
+    width: clamp(180px, 40vw, 220px);
+    height: clamp(180px, 40vw, 220px);
   }
   
   .userButton {
-    padding: 0.875rem;
+    padding: clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .userInitials {
-    width: 40px;
-    height: 40px;
-    font-size: 0.9375rem;
-    margin-right: 0.875rem;
+    width: clamp(36px, 7vw, 40px);
+    height: clamp(36px, 7vw, 40px);
+    font-size: clamp(0.875rem, 1.5vw, 0.9375rem);
+    margin-right: clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .userName {
-    font-size: 0.875rem;
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .userEmail {
-    font-size: 0.75rem;
+    font-size: clamp(0.6875rem, 1.5vw, 0.75rem);
   }
   
   .sidebarFooter {
-    padding: 1.25rem;
+    padding: clamp(1rem, 2vw, 1.25rem);
   }
   
   .modalContent {
@@ -2332,41 +2329,41 @@
   }
   
   .modalHeader {
-    padding: 1.25rem 1.5rem;
+    padding: clamp(1rem, 2vw, 1.25rem) clamp(1.25rem, 2.5vw, 1.5rem);
   }
   
   .modalHeader h3 {
-    font-size: 1.0625rem;
+    font-size: clamp(1rem, 2vw, 1.0625rem);
   }
   
   .modalBody {
-    padding: 1.5rem;
-    font-size: 0.875rem;
+    padding: clamp(1.25rem, 2.5vw, 1.5rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .modalFooter {
-    padding: 1.25rem 1.5rem;
-    gap: 0.875rem;
+    padding: clamp(1rem, 2vw, 1.25rem) clamp(1.25rem, 2.5vw, 1.5rem);
+    gap: clamp(0.75rem, 1.5vw, 0.875rem);
   }
   
   .modalButton {
-    padding: 0.75rem 1.375rem;
-    font-size: 0.875rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(1.125rem, 2vw, 1.375rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .attachmentMenu {
-    min-width: 140px;
-    padding: 0.625rem;
+    min-width: clamp(120px, 25vw, 140px);
+    padding: clamp(0.5rem, 1vw, 0.625rem);
   }
   
   .attachmentMenu button {
-    padding: 0.75rem 1rem;
-    font-size: 0.875rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.875rem, 1.5vw, 1rem);
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
   
   .expertBadge {
-    padding: 0.5rem;
-    font-size: 0.8125rem;
+    padding: clamp(0.375rem, 1vw, 0.5rem);
+    font-size: clamp(0.75rem, 1.5vw, 0.8125rem);
     gap: 0;
   }
   
@@ -2375,37 +2372,37 @@
   }
   
   .expertBadgeIcon {
-    font-size: 1rem;
+    font-size: clamp(0.9375rem, 1.5vw, 1rem);
     margin: 0;
   }
   
   .expertBadgeClose {
-    margin-left: 0.625rem;
+    margin-left: clamp(0.5rem, 1vw, 0.625rem);
   }
   
   .inputFieldWrapper {
-    gap: 0.5rem;
+    gap: clamp(0.375rem, 1vw, 0.5rem);
   }
   
   .typingIndicator {
-    padding: 0.75rem 1rem;
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(0.875rem, 1.5vw, 1rem);
   }
   
   .typingDots span {
-    height: 8px;
-    width: 8px;
+    height: clamp(7px, 1.5vw, 8px);
+    width: clamp(7px, 1.5vw, 8px);
   }
 }
 
 @media (max-width: 360px) {
   .mobileMenuButton {
-    font-size: 1.1875rem;
-    padding: 0.5rem;
-    margin-right: 0.75rem;
+    font-size: clamp(1.0625rem, 2vw, 1.1875rem);
+    padding: clamp(0.375rem, 1vw, 0.5rem);
+    margin-right: clamp(0.625rem, 1.5vw, 0.75rem);
   }
   
   .chatHeaderTitle {
-    font-size: 1rem;
+    font-size: clamp(0.9375rem, 2vw, 1rem);
   }
   
   .chatArea {
@@ -2415,23 +2412,32 @@
   .messageArea {
     border-left: 1px solid var(--border-light);
     border-right: 1px solid var(--border-light);
-    padding: 1rem 0.75rem;
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(0.625rem, 1.5vw, 0.75rem);
+  }
+  
+  .messageWrapper {
+    max-width: 96%;
   }
   
   .welcomeTitle {
-    font-size: 1.75rem;
+    font-size: clamp(1.625rem, 4vw, 1.75rem);
   }
   
   .welcomeMessage h2 {
-    font-size: 1.75rem;
+    font-size: clamp(1.625rem, 4vw, 1.75rem);
   }
   
   .welcomeEmoji {
-    font-size: 1.75rem;
+    font-size: clamp(1.625rem, 4vw, 1.75rem);
   }
   
   .welcomeMessage p {
-    font-size: 0.95rem;
+    font-size: clamp(0.875rem, 1.5vw, 0.95rem);
+  }
+  
+  .message {
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
+    padding: clamp(0.875rem, 2vw, 1rem) clamp(1rem, 2vw, 1.125rem);
   }
   
   .message {

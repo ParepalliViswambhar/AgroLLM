@@ -632,56 +632,139 @@
 
 @media (max-width: 768px) {
   .container {
-    padding: 1rem;
+    padding: clamp(0.75rem, 2vw, 1rem);
   }
 
   .header {
     flex-direction: column;
     align-items: flex-start;
-    gap: 1rem;
+    gap: clamp(0.75rem, 1.5vw, 1rem);
+    padding-bottom: clamp(1rem, 2vw, 1.5rem);
   }
 
   .title {
-    font-size: 1.75rem;
+    font-size: clamp(1.5rem, 3.5vw, 1.75rem);
+  }
+  
+  .subtitle {
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
+  }
+  
+  .headerRight {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  
+  .refreshBtn,
+  .logoutBtn,
+  .themeBtn {
+    flex: 1;
+    min-width: calc(50% - 0.5rem);
+    padding: clamp(0.625rem, 1.5vw, 0.75rem) clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
   }
 
   .statsGrid {
     grid-template-columns: 1fr;
+    gap: clamp(1rem, 2vw, 1.5rem);
+  }
+  
+  .statCard {
+    padding: clamp(1rem, 2vw, 1.5rem);
+  }
+  
+  .statIcon {
+    width: clamp(50px, 10vw, 60px);
+    height: clamp(50px, 10vw, 60px);
+    font-size: clamp(1.5rem, 3vw, 1.75rem);
+  }
+  
+  .statValue {
+    font-size: clamp(1.5rem, 3vw, 2rem);
+  }
+  
+  .statLabel {
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
 
   .tableContainer {
-    overflow-x: scroll;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table {
-    font-size: 0.875rem;
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
+    min-width: 600px;
   }
 
   .table th,
   .table td {
-    padding: 0.5rem;
+    padding: clamp(0.375rem, 1vw, 0.5rem);
+    white-space: nowrap;
   }
 
   .tabs {
     flex-direction: column;
     gap: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .tab {
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    padding: clamp(0.75rem, 1.5vw, 1rem) clamp(1rem, 2vw, 1.5rem);
+    font-size: clamp(0.875rem, 1.5vw, 1rem);
   }
 
   .feedbackHeader {
     flex-direction: column;
+    gap: clamp(0.75rem, 1.5vw, 1rem);
   }
 
   .feedbackSectionHeader {
     flex-direction: column;
+    align-items: flex-start;
   }
 
   .feedbackBadges {
     flex-direction: row;
     align-items: flex-start;
+  }
+  
+  .feedbackCard {
+    padding: clamp(1rem, 2vw, 1.5rem);
+  }
+  
+  .feedbackSubject {
+    font-size: clamp(1.0625rem, 2vw, 1.25rem);
+  }
+  
+  .feedbackMeta {
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
+  }
+  
+  .usersSection,
+  .feedbackSection,
+  .analyticsSection {
+    padding: clamp(1rem, 2vw, 1.5rem);
+  }
+  
+  .sectionTitle {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+    margin-bottom: clamp(1rem, 2vw, 1.5rem);
+  }
+  
+  .modal {
+    padding: clamp(1.25rem, 2.5vw, 2rem);
+    width: 95%;
+  }
+  
+  .modalTitle {
+    font-size: clamp(1.25rem, 2.5vw, 1.5rem);
+  }
+  
+  .modalSubtitle {
+    font-size: clamp(0.8125rem, 1.5vw, 0.875rem);
   }
 }
 

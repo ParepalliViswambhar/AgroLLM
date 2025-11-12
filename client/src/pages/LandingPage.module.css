@@ -45,20 +45,22 @@
 
 /* Main Content */
 .mainContent {
-  padding: 2rem 1rem;
+  padding: clamp(1rem, 3vw, 2rem) clamp(0.75rem, 2vw, 1rem);
   max-width: 1200px;
   margin: 0 auto;
+  width: 100%;
 }
 
 /* Hero Section */
 .heroSection {
   text-align: center;
-  padding: 6rem 3rem;
+  padding: clamp(2.5rem, 8vw, 6rem) clamp(1.25rem, 4vw, 3rem);
   background: var(--gradient-primary);
   color: white;
   border-radius: var(--radius-3xl);
-  margin: 4rem auto;
+  margin: clamp(1.5rem, 5vw, 4rem) auto;
   max-width: 1100px;
+  width: calc(100% - 2rem);
   position: relative;
   overflow: hidden;
   box-shadow: var(--shadow-2xl), var(--shadow-glow);
@@ -92,9 +94,9 @@
 }
 
 .heroSection h2 {
-  font-size: 4rem;
+  font-size: clamp(2rem, 6vw, 4rem);
   font-weight: 900;
-  margin-bottom: 1.75rem;
+  margin-bottom: clamp(1rem, 3vw, 1.75rem);
   letter-spacing: -0.04em;
   line-height: 1.05;
   position: relative;
@@ -105,9 +107,9 @@
 
 .heroSection p {
   color: rgba(255, 255, 255, 0.95);
-  font-size: 1.375rem;
+  font-size: clamp(0.9375rem, 2.5vw, 1.375rem);
   line-height: 1.7;
-  margin-bottom: 2.5rem;
+  margin-bottom: clamp(1.5rem, 4vw, 2.5rem);
   max-width: 700px;
   margin-left: auto;
   margin-right: auto;
@@ -195,8 +197,8 @@
 
 .featuresSection h2 {
   color: var(--text-primary);
-  margin-bottom: 3.5rem;
-  font-size: 2.75rem;
+  margin-bottom: clamp(2rem, 4vw, 3.5rem);
+  font-size: clamp(1.875rem, 4vw, 2.75rem);
   font-weight: 800;
   letter-spacing: -0.035em;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -218,16 +220,16 @@
 
 .featuresGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-  gap: 2rem;
-  padding: 0 1rem;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 280px), 1fr));
+  gap: clamp(1.25rem, 3vw, 2rem);
+  padding: 0 clamp(0.5rem, 2vw, 1rem);
 }
 
 .featureCard {
   background: var(--bg-glass);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  padding: 3rem 2.5rem;
+  padding: clamp(1.75rem, 4vw, 3rem) clamp(1.25rem, 3vw, 2.5rem);
   border-radius: var(--radius-2xl);
   box-shadow: var(--shadow-lg);
   transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
@@ -260,9 +262,9 @@
 }
 
 .featureIcon {
-  font-size: 3.5rem;
+  font-size: clamp(2.25rem, 5vw, 3.5rem);
   color: var(--primary);
-  margin-bottom: 1.75rem;
+  margin-bottom: clamp(1rem, 3vw, 1.75rem);
   filter: drop-shadow(0 6px 12px var(--primary-glow));
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -274,8 +276,8 @@
 
 .featureCard h3 {
   color: var(--text-primary);
-  margin-bottom: 1.125rem;
-  font-size: 1.625rem;
+  margin-bottom: clamp(0.75rem, 2vw, 1.125rem);
+  font-size: clamp(1.25rem, 3vw, 1.625rem);
   font-weight: 700;
   letter-spacing: -0.03em;
   font-family: 'Plus Jakarta Sans', sans-serif;
@@ -284,7 +286,7 @@
 .featureCard p {
   color: var(--text-secondary);
   line-height: 1.7;
-  font-size: 1.0625rem;
+  font-size: clamp(0.875rem, 2vw, 1.0625rem);
   font-weight: 500;
 }
 
@@ -301,51 +303,25 @@
 
 /* Responsive Design */
 @media (max-width: 1024px) {
-  .heroSection {
-    padding: 4rem 2rem;
-    margin: 2.5rem auto;
+  .mainContent {
+    padding: 1.5rem 1rem;
   }
   
-  .heroSection h2 {
-    font-size: 3rem;
-  }
-  
-  .heroSection p {
-    font-size: 1.125rem;
-  }
-  
-  .featuresGrid {
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: 1.75rem;
-  }
-  
-  .featureCard {
-    padding: 2.25rem 1.75rem;
+  .featuresSection {
+    padding: 3rem 0;
   }
 }
 
 @media (max-width: 768px) {
   .heroSection {
-    padding: 3rem 1.5rem;
-    margin: 2rem 1rem;
     border-radius: var(--radius-xl);
-  }
-  
-  .heroSection h2 {
-    font-size: 2.5rem;
-    margin-bottom: 1.25rem;
-  }
-  
-  .heroSection p {
-    font-size: 1.0625rem;
-    margin-bottom: 1.75rem;
+    width: calc(100% - 1rem);
   }
   
   .ctaButtons {
     flex-direction: column;
     align-items: stretch;
     gap: 0.875rem;
-    margin-top: 2rem;
   }
   
   .ctaButton {
@@ -356,50 +332,17 @@
     font-size: 0.9375rem;
   }
   
-  .featuresSection {
-    padding: 3rem 0;
-    margin: 3rem auto;
-  }
-  
-  .featuresSection h2 {
-    font-size: 2.25rem;
-    margin-bottom: 2.5rem;
-  }
-  
   .featuresGrid {
     grid-template-columns: 1fr;
-    gap: 1.5rem;
-    padding: 0;
-  }
-  
-  .featureCard {
-    padding: 2rem 1.5rem;
-  }
-  
-  .featureIcon {
-    font-size: 2.5rem;
-    margin-bottom: 1.25rem;
-  }
-  
-  .featureCard h3 {
-    font-size: 1.375rem;
-    margin-bottom: 0.875rem;
-  }
-  
-  .featureCard p {
-    font-size: 0.9375rem;
+    padding: 0 0.5rem;
   }
   
   .mainContent {
-    padding: 1.5rem 1rem;
+    padding: 1.5rem 0.75rem;
   }
   
   .header {
-    padding: 1.5rem;
-  }
-  
-  .header h1 {
-    font-size: 1.75rem;
+    padding: 1.5rem 1rem;
   }
   
   .footer {
@@ -411,25 +354,8 @@
 
 @media (max-width: 480px) {
   .heroSection {
-    padding: 2.5rem 1.25rem;
-    margin: 1.5rem 0.75rem;
-  }
-  
-  .heroSection h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    line-height: 1.15;
-  }
-  
-  .heroSection p {
-    font-size: 0.9375rem;
-    margin-bottom: 1.5rem;
-    line-height: 1.5;
-  }
-  
-  .ctaButtons {
-    gap: 0.75rem;
-    margin-top: 1.75rem;
+    width: calc(100% - 0.5rem);
+    border-radius: var(--radius-lg);
   }
   
   .ctaButton {
@@ -438,53 +364,20 @@
     gap: 0.5rem;
   }
   
-  .featuresSection {
-    padding: 2.5rem 0;
-    margin: 2.5rem auto;
-  }
-  
-  .featuresSection h2 {
-    font-size: 1.875rem;
-    margin-bottom: 2rem;
-  }
-  
   .featuresGrid {
-    gap: 1.25rem;
-  }
-  
-  .featureCard {
-    padding: 1.75rem 1.25rem;
-  }
-  
-  .featureIcon {
-    font-size: 2.25rem;
-    margin-bottom: 1rem;
-  }
-  
-  .featureCard h3 {
-    font-size: 1.25rem;
-    margin-bottom: 0.75rem;
-  }
-  
-  .featureCard p {
-    font-size: 0.875rem;
-    line-height: 1.5;
+    padding: 0 0.25rem;
   }
   
   .mainContent {
-    padding: 1rem 0.75rem;
+    padding: 1rem 0.5rem;
   }
   
   .header {
-    padding: 1.25rem;
-  }
-  
-  .header h1 {
-    font-size: 1.5rem;
+    padding: 1.25rem 0.75rem;
   }
   
   .footer {
-    padding: 2rem 1.25rem;
+    padding: 2rem 1rem;
     margin-top: 2.5rem;
     font-size: 0.9375rem;
   }
@@ -492,16 +385,7 @@
 
 @media (max-width: 360px) {
   .heroSection {
-    padding: 2rem 1rem;
-    margin: 1rem 0.5rem;
-  }
-  
-  .heroSection h2 {
-    font-size: 1.75rem;
-  }
-  
-  .heroSection p {
-    font-size: 0.875rem;
+    width: calc(100% - 0.25rem);
   }
   
   .ctaButton {
@@ -509,23 +393,7 @@
     font-size: 0.8125rem;
   }
   
-  .featuresSection h2 {
-    font-size: 1.625rem;
-  }
-  
-  .featureCard {
-    padding: 1.5rem 1rem;
-  }
-  
-  .featureIcon {
-    font-size: 2rem;
-  }
-  
-  .featureCard h3 {
-    font-size: 1.125rem;
-  }
-  
-  .featureCard p {
-    font-size: 0.8125rem;
+  .mainContent {
+    padding: 0.75rem 0.25rem;
   }
 }
